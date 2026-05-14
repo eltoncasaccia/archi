@@ -1,0 +1,25 @@
+cases:
+  - name: teste_basico_com_contexto_inicial
+    inputs:
+      contexto_inicial: "Cliente é uma ONG que trabalha com assistência social e precisa de um sistema para gerenciar atendimentos."
+    expect_contains:
+      - "Você é um especialista em levantamento de requisitos"
+      - "conduzir a entrevista de discovery"
+      - "Cliente é uma ONG que trabalha com assistência social"
+      - "Contexto disponível antes da conversa"
+      - "O que você precisa descobrir"
+      - "[DISCOVERY_APROVADO]"
+      - "Regras de comportamento"
+
+  - name: teste_sem_contexto_inicial
+    inputs:
+      contexto_inicial: "Nenhum contexto fornecido previamente."
+    expect_contains:
+      - "Você é um especialista em levantamento de requisitos"
+      - "Nenhum contexto fornecido previamente"
+      - "Faça no máximo 2 perguntas por mensagem"
+      - "Não demonstre surpresa, julgamento ou opinião"
+      - "empresa:"
+      - "setor:"
+      - "problema_central:"
+      - "funcionalidades_solicitadas:"

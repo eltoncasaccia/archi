@@ -1,0 +1,62 @@
+cases:
+  - name: teste_basico_precificacao
+    inputs:
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: TechCorp
+        complexidade_geral: Média
+        modulos:
+          - nome: Gestão de Usuários
+            complexidade: Baixa
+            classificacao: Core
+          - nome: Dashboard Analítico
+            complexidade: Alta
+            classificacao: Core
+        riscos_relevantes:
+          - item: Integração com API externa
+            severidade: ALTO
+        [/DISCOVERY_SUMMARY]
+      parametros_comerciais: |
+        taxa_hora_desenvolvedor: R$ 150
+        margem_risco: 20%
+        moeda: BRL
+        complexidade_baixa: 40-80h
+        complexidade_media: 80-160h
+        complexidade_alta: 160-320h
+    expect_contains:
+      - "especialista em precificação de projetos de software"
+      - "Protocolo de precificação"
+      - "TechCorp"
+      - "[PRICING_SUMMARY]"
+      - "mvp:"
+      - "modulos:"
+      - "faixa_minima:"
+      - "faixa_maxima:"
+      - "total_minimo:"
+      - "total_maximo:"
+      - "fase_2_indicativa:"
+
+  - name: teste_com_risco_critico
+    inputs:
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: HealthApp
+        complexidade_geral: Muito Alta
+        modulos:
+          - nome: Sistema de IA para Diagnóstico
+            complexidade: Muito Alta
+            classificacao: Core
+        riscos_relevantes:
+          - item: IA não especificada
+            severidade: CRÍTICO
+        [/DISCOVERY_SUMMARY]
+      parametros_comerciais: |
+        taxa_hora_desenvolvedor: R$ 180
+        margem_risco: 30%
+        moeda: BRL
+    expect_contains:
+      - "precificação de projetos de software"
+      - "HealthApp"
+      - "requer_discovery_adicional"
+      - "[PRICING_SUMMARY]"
+      - "Risco CRÍTICO"

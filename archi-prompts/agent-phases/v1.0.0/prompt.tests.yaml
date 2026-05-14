@@ -1,0 +1,79 @@
+cases:
+  - name: teste_planejamento_fases_mvp
+    inputs:
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: EduTech
+        problema_central: Gestão de cursos online
+        modulos:
+          - nome: Autenticação
+            complexidade: Baixa
+            classificacao: Core
+          - nome: Gestão de Cursos
+            complexidade: Média
+            classificacao: Core
+          - nome: Sistema de Pagamentos
+            complexidade: Alta
+            classificacao: Core
+          - nome: Relatórios Avançados
+            complexidade: Média
+            classificacao: Fase 2
+        [/DISCOVERY_SUMMARY]
+      pricing_summary: |
+        [PRICING_SUMMARY]
+        modelo_comercial_recomendado: MVP fechado + expansão por T&M
+        mvp:
+          modulos:
+            - nome: Autenticação
+              faixa_minima: 8000
+              faixa_maxima: 12000
+            - nome: Gestão de Cursos
+              faixa_minima: 15000
+              faixa_maxima: 22000
+          total_minimo: 35000
+          total_maximo: 50000
+        [/PRICING_SUMMARY]
+    expect_contains:
+      - "especialista em planejamento de entregas de software"
+      - "EduTech"
+      - "[PHASES_PLAN]"
+      - "fases:"
+      - "numero: 1"
+      - "nome:"
+      - "objetivo:"
+      - "modulos_incluidos:"
+      - "valor_entregue:"
+      - "criterio_de_aceite:"
+      - "expansao_futura:"
+
+  - name: teste_projeto_complexo_multiplas_fases
+    inputs:
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: FinanceCorp
+        complexidade_geral: Alta
+        modulos:
+          - nome: Core Bancário
+            complexidade: Muito Alta
+            classificacao: Core
+          - nome: Mobile Banking
+            complexidade: Alta
+            classificacao: Core
+          - nome: Open Banking
+            complexidade: Alta
+            classificacao: Acessório
+        [/DISCOVERY_SUMMARY]
+      pricing_summary: |
+        [PRICING_SUMMARY]
+        modelo_comercial_recomendado: Orçamento fechado por fases
+        mvp:
+          total_minimo: 150000
+          total_maximo: 220000
+        [/PRICING_SUMMARY]
+    expect_contains:
+      - "planejamento de entregas"
+      - "FinanceCorp"
+      - "[PHASES_PLAN]"
+      - "modelo_de_entrega:"
+      - "total_de_fases:"
+      - "escopo:"

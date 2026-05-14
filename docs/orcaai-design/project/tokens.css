@@ -1,0 +1,149 @@
+/* Archi — design tokens */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* paper */
+  --paper: #faf7f0;
+  --paper-2: #f3eee2;
+  --paper-3: #e9e3d3;
+  --rule: #d9d2bf;
+  --rule-2: #e8e2d1;
+
+  /* ink */
+  --ink: #15110d;
+  --ink-2: #2b251d;
+  --muted: #6b6259;
+  --muted-2: #948a7d;
+
+  /* accent — burnt orange (single signal color) */
+  --accent: oklch(0.62 0.16 45);
+  --accent-soft: oklch(0.62 0.16 45 / 0.10);
+  --accent-ink: oklch(0.42 0.13 45);
+
+  /* semantic — desaturated to fit warm palette */
+  --ok:    oklch(0.55 0.10 145);
+  --warn:  oklch(0.70 0.13 80);
+  --danger:oklch(0.55 0.16 25);
+  --info:  oklch(0.50 0.10 235);
+
+  --ok-soft:    oklch(0.55 0.10 145 / 0.12);
+  --warn-soft:  oklch(0.70 0.13 80 / 0.18);
+  --danger-soft:oklch(0.55 0.16 25 / 0.10);
+  --info-soft:  oklch(0.50 0.10 235 / 0.10);
+
+  /* type */
+  --sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* base reset for screens */
+.oa-root {
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.005em;
+}
+.oa-root * { box-sizing: border-box; }
+.oa-root button { font-family: inherit; cursor: pointer; }
+.oa-root input, .oa-root textarea { font-family: inherit; }
+
+.mono { font-family: var(--mono); font-feature-settings: "zero", "ss01"; }
+.eyebrow {
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* badges */
+.oa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 8px;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.oa-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.oa-badge.warn   { background: var(--warn-soft);   color: oklch(0.42 0.10 80); }
+.oa-badge.ok     { background: var(--ok-soft);     color: oklch(0.40 0.10 145); }
+.oa-badge.info   { background: var(--info-soft);   color: oklch(0.38 0.10 235); }
+.oa-badge.danger { background: var(--danger-soft); color: oklch(0.42 0.14 25); }
+.oa-badge.muted  { background: var(--paper-3);     color: var(--ink-2); }
+
+/* buttons */
+.oa-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  border-radius: 2px;
+  transition: opacity 0.15s;
+}
+.oa-btn:hover { opacity: 0.88; }
+.oa-btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.oa-btn.ghost:hover { background: var(--paper-2); opacity: 1; }
+.oa-btn.accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.oa-btn.disabled, .oa-btn[disabled] {
+  background: var(--paper-3);
+  color: var(--muted-2);
+  border-color: var(--rule);
+  pointer-events: none;
+}
+.oa-btn.sm { padding: 6px 12px; font-size: 13px; }
+
+/* form */
+.oa-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: var(--mono);
+}
+.oa-input:focus { border-color: var(--ink); }
+.oa-input::placeholder { color: var(--muted-2); }
+
+/* card */
+.oa-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+/* rule */
+.oa-rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+.oa-rule.thick { background: var(--ink); height: 2px; }

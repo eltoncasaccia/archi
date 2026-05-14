@@ -1,0 +1,26 @@
+# ── macOS ─────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Claude Code (sessão local, memória, planos) ───────────────────────
+.claude/
+
+# ── Skills instaladas (equivalente a node_modules dos skills) ─────────
+repo-skills/
+
+# ── Variáveis de ambiente na raiz ─────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Logs ─────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDEs e editores ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,44 @@
+cases:
+  - name: teste_basico_com_discovery_aprovado
+    inputs:
+      discovery_aprovado: |
+        [DISCOVERY_APROVADO]
+        empresa: TechCorp Soluções
+        setor: Tecnologia
+        problema_central: Gestão manual de projetos
+        processos_atuais: Planilhas e e-mails
+        funcionalidades_solicitadas: Sistema de gestão de projetos com controle de tarefas
+        perfis_de_usuarios: Gerente, Desenvolvedor, Cliente
+        [/DISCOVERY_APROVADO]
+      documentos_opcionais: "Nenhum documento adicional fornecido."
+      preocupacoes_especificas: "Verificar viabilidade de integração com ferramentas externas."
+    expect_contains:
+      - "Você é um Especialista Sênior em Discovery de Projetos"
+      - "BASE DEFENSÁVEL PARA ORÇAMENTO MACRO"
+      - "TechCorp Soluções"
+      - "Protocolo de Análise"
+      - "[DISCOVERY_SUMMARY]"
+      - "modulos:"
+      - "riscos_relevantes:"
+      - "premissas:"
+      - "complexidade_geral:"
+
+  - name: teste_com_documentos_opcionais
+    inputs:
+      discovery_aprovado: |
+        [DISCOVERY_APROVADO]
+        empresa: HealthCare Plus
+        setor: Saúde
+        problema_central: Gestão de prontuários médicos
+        dados_sensiveis: Dados de saúde dos pacientes
+        [/DISCOVERY_APROVADO]
+      documentos_opcionais: "Documento técnico com requisitos detalhados de LGPD e normas do setor de saúde."
+      preocupacoes_especificas: "Alto risco de compliance com LGPD e regulamentações de saúde."
+    expect_contains:
+      - "Especialista Sênior em Discovery"
+      - "HealthCare Plus"
+      - "Documento técnico com requisitos detalhados"
+      - "Checklist de Complexidades"
+      - "LGPD e dados sensíveis"
+      - "Escala de Severidade de Risco"
+      - "[DISCOVERY_SUMMARY]"

@@ -1,0 +1,22 @@
+services:
+
+  api:
+    build: ./archi-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./archi-api/.env
+    volumes:
+      - ./archi-api:/app
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  web:
+    build: ./archi-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./archi-web/.env.local
+    volumes:
+      - ./archi-web:/app
+      - /app/node_modules
+      - /app/.next

@@ -1,0 +1,101 @@
+cases:
+  - name: teste_geracao_proposta_completa
+    inputs:
+      discovery_aprovado: |
+        [DISCOVERY_APROVADO]
+        empresa: StartupXYZ
+        setor: E-commerce
+        problema_central: Gestão de vendas online
+        funcionalidades_solicitadas: Catálogo de produtos, carrinho, checkout
+        [/DISCOVERY_APROVADO]
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: StartupXYZ
+        problema_central: Gestão de vendas online
+        modulos:
+          - nome: Catálogo de Produtos
+            classificacao: Core
+          - nome: Carrinho de Compras
+            classificacao: Core
+        [/DISCOVERY_SUMMARY]
+      pricing_summary: |
+        [PRICING_SUMMARY]
+        modelo_comercial_recomendado: Orçamento fechado direto
+        moeda: BRL
+        mvp:
+          total_minimo: 45000
+          total_maximo: 65000
+        [/PRICING_SUMMARY]
+      phases_plan: |
+        [PHASES_PLAN]
+        total_de_fases: 2
+        fases:
+          - numero: 1
+            nome: MVP - Plataforma Base
+            objetivo: Permitir vendas online básicas
+        [/PHASES_PLAN]
+      dados_empresa_vendedora: |
+        nome: TechSolutions Ltda
+        email: contato@techsolutions.com
+        telefone: (11) 99999-9999
+        site: www.techsolutions.com
+    expect_contains:
+      - "especialista em redação de propostas comerciais"
+      - "StartupXYZ"
+      - "Estrutura da proposta"
+      - "Apresentação"
+      - "Entendimento do Projeto"
+      - "O que será desenvolvido"
+      - "Como será entregue"
+      - "Investimento"
+      - "Premissas e condições de validade"
+      - "Próximos passos"
+      - "Contato"
+      - "[PROPOSAL_METADATA]"
+      - "cliente:"
+      - "empresa_vendedora:"
+      - "valor_total_minimo:"
+      - "valor_total_maximo:"
+
+  - name: teste_proposta_modelo_mvp_expansao
+    inputs:
+      discovery_aprovado: |
+        [DISCOVERY_APROVADO]
+        empresa: LogisticaPro
+        setor: Logística
+        problema_central: Rastreamento de entregas
+        [/DISCOVERY_APROVADO]
+      discovery_summary: |
+        [DISCOVERY_SUMMARY]
+        empresa: LogisticaPro
+        problema_central: Rastreamento de entregas em tempo real
+        modulos:
+          - nome: Rastreamento GPS
+            classificacao: Core
+        [/DISCOVERY_SUMMARY]
+      pricing_summary: |
+        [PRICING_SUMMARY]
+        modelo_comercial_recomendado: MVP fechado + expansão por T&M
+        moeda: BRL
+        mvp:
+          total_minimo: 80000
+          total_maximo: 120000
+        fase_2_indicativa:
+          - item: Integração com transportadoras
+            faixa_indicativa: 25000-40000
+        [/PRICING_SUMMARY]
+      phases_plan: |
+        [PHASES_PLAN]
+        modelo_de_entrega: MVP fechado + expansão por T&M
+        total_de_fases: 1
+        [/PHASES_PLAN]
+      dados_empresa_vendedora: |
+        nome: DevHouse
+        email: comercial@devhouse.com
+    expect_contains:
+      - "redação de propostas comerciais"
+      - "LogisticaPro"
+      - "documento de negócio"
+      - "[PROPOSAL_METADATA]"
+      - "modelo_comercial:"
+      - "status: rascunho_para_revisao"
