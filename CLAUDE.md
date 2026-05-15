@@ -73,10 +73,6 @@ docker compose logs api       # snapshot
 Alterações de schema: execute no **Supabase Dashboard → SQL Editor**, ou via **MCP do Supabase** no Claude Code.
 
 O arquivo de referência com o schema completo é `scripts/db_setup.sql`.
-Antes de usar o MCP do Supabase, instale o skill:
-```bash
-npx skills add supabase/agent-skills
-```
 
 ## Inicialização (primeira vez)
 
@@ -106,9 +102,14 @@ Ver `docs/PREREQUISITES.md` para onde obter cada chave.
 3. **Não instale bibliotecas sem confirmar** — use `uv add <pacote>` no backend, `npm install <pacote>` no frontend
 4. **Carregue apenas os arquivos da tarefa atual** — não leia toda a documentação de uma vez
 
-## Skills — instale antes de trabalhar nessas áreas
+## Skills instaladas
 
-| Área | Comando |
+| Área | Skill |
 |---|---|
-| LangFuse (tracing, prompts) | `npx skills add langfuse/agent-skills` |
-| Supabase (banco, migrations, RLS) | `npx skills add supabase/agent-skills` |
+| LangFuse (tracing, prompts) | `langfuse` |
+| Supabase (banco, migrations, RLS) | `supabase`, `supabase-postgres-best-practices` |
+| Geração de documentos Word | `docx` |
+| Geração/manipulação de PDF | `pdf` |
+| Interfaces e componentes frontend | `frontend-design` |
+| Criar/melhorar skills | `skill-creator` |
+| Descobrir novas skills | `find-skills` |
