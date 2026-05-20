@@ -24,3 +24,6 @@ logs/
 .idea/
 *.swp
 *.swo
+
+# ── Designer state (muda frequentemente) ──────────────────────────────
+.design-canvas.state.json
