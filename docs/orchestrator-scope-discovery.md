@@ -1,4 +1,4 @@
-# orchestrator-pre-sales
+# orchestrator-scope-discovery
 
 ## Responsabilidade
 
@@ -158,8 +158,8 @@ Canal de notificação a definir na implementação (email via Resend ou webhook
 ## Localização no repositório
 
 ```
-prompts/pre-sales/
-└── orchestrator-pre-sales/
+prompts/scope-discovery/
+└── orchestrator-scope-discovery/
     └── README.md          ← este arquivo
 ```
 

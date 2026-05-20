@@ -17,7 +17,7 @@ Fase 2 — Pipeline interno automatizado
   agent-phases                  (plano de fases entregáveis)
   agent-proposal-generator      (redação da proposta comercial)
 
-  orchestrator-pre-sales        (pendente — coordena os 4 subagentes acima)
+  orchestrator-scope-discovery  (pendente — coordena os 4 subagentes acima)
 ```
 
 **Contratos de interface entre agentes já definidos:**

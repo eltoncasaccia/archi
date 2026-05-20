@@ -1,4 +1,4 @@
-# Inventory — Pre-Sales Pipeline
+# Inventory — Scope Discovery Pipeline
 
 ## Prompts criados
 
@@ -9,7 +9,7 @@
 | 3 | agent-pricing | subagent | 2 | 1.0.0 | — | — | ✅ Pronto |
 | 4 | agent-phases | subagent | 2 | 1.0.0 | — | — | ✅ Pronto |
 | 5 | agent-proposal-generator | subagent | 2 | 1.0.0 | docx (ou pdf) | — | ✅ Pronto |
-| 6 | orchestrator-pre-sales | orchestrator | 2 | — | — | — | ⏳ Pendente |
+| 6 | orchestrator-scope-discovery | orchestrator | 2 | — | — | — | ⏳ Pendente |
 
 ---
 
@@ -31,8 +31,8 @@
 
 ```
 prompts/
-├── registry.yaml                          ← fazer merge de registry-pre-sales.yaml aqui
-└── pre-sales/
+├── registry.yaml                          ← fazer merge de registry-scope-discovery.yaml aqui
+└── scope-discovery/
     ├── PIPELINE-OVERVIEW.md               ← documentação completa do pipeline
     ├── agent-discovery-interview/
     │   ├── README.md
@@ -67,18 +67,18 @@ prompts/
 
 | Arquivo gerado | Destino no repositório |
 |---|---|
-| agent-discovery-interview.yaml | pre-sales/agent-discovery-interview/v1.0.0/prompt.yaml |
-| README-agent-entrevista-discovery.md | pre-sales/agent-discovery-interview/README.md |
-| agent-discovery-generator.yaml | pre-sales/agent-discovery-generator/v1.0.0/prompt.yaml |
-| README-agent-discovery-generator.md | pre-sales/agent-discovery-generator/README.md |
-| agent-pricing.yaml | pre-sales/agent-pricing/v1.0.0/prompt.yaml |
-| README-agent-pricing.md | pre-sales/agent-pricing/README.md |
-| agent-phases.yaml | pre-sales/agent-phases/v1.0.0/prompt.yaml |
-| README-agent-phases.md | pre-sales/agent-phases/README.md |
-| agent-proposal-generator.yaml | pre-sales/agent-proposal-generator/v1.0.0/prompt.yaml |
-| README-agent-proposal-generator.md | pre-sales/agent-proposal-generator/README.md |
-| registry-pre-sales.yaml | fazer merge em registry.yaml |
-| PIPELINE-OVERVIEW.md | pre-sales/PIPELINE-OVERVIEW.md |
+| agent-discovery-interview.yaml | scope-discovery/agent-discovery-interview/v1.0.0/prompt.yaml |
+| README-agent-entrevista-discovery.md | scope-discovery/agent-discovery-interview/README.md |
+| agent-discovery-generator.yaml | scope-discovery/agent-discovery-generator/v1.0.0/prompt.yaml |
+| README-agent-discovery-generator.md | scope-discovery/agent-discovery-generator/README.md |
+| agent-pricing.yaml | scope-discovery/agent-pricing/v1.0.0/prompt.yaml |
+| README-agent-pricing.md | scope-discovery/agent-pricing/README.md |
+| agent-phases.yaml | scope-discovery/agent-phases/v1.0.0/prompt.yaml |
+| README-agent-phases.md | scope-discovery/agent-phases/README.md |
+| agent-proposal-generator.yaml | scope-discovery/agent-proposal-generator/v1.0.0/prompt.yaml |
+| README-agent-proposal-generator.md | scope-discovery/agent-proposal-generator/README.md |
+| registry-scope-discovery.yaml | fazer merge em registry.yaml |
+| PIPELINE-OVERVIEW.md | scope-discovery/PIPELINE-OVERVIEW.md |
 
 ---
 
@@ -96,6 +96,6 @@ prompts/
 
 ## Pendências (próxima sessão)
 
-- [ ] orchestrator-pre-sales (prompt + README)
+- [ ] orchestrator-scope-discovery (prompt + README)
 - [ ] prompt.tests.yaml para cada agent
 - [ ] Arquitetura técnica (gerenciamento de estado, retry, painel administrativo, pipeline de e-mail)

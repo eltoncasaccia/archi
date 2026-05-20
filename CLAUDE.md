@@ -21,7 +21,7 @@ e recebem uma proposta comercial por email. O admin revisa e aprova antes do env
 ## Estrutura de pastas
 
 ```
-PRE-SALES/
+SCOPE-DISCOVERY/
 ├── docs/               ← documentação (TECH SPEC, SCREENS, ADRs...)
 ├── scripts/            ← scripts operacionais (dev.sh, setup.sh, sync_prompts.sh, db_setup.sql)
 ├── archi-prompts/     ← prompts dos agentes (YAML)
@@ -93,7 +93,7 @@ Ver `docs/PREREQUISITES.md` para onde obter cada chave.
 | `SCREENS.md` | Comportamento de cada tela |
 | `ADRs/` | 9 decisões arquiteturais |
 | `PREREQUISITES.md` | Pré-requisitos e chaves necessárias |
-| `orchestrator-pre-sales.md` | Spec do pipeline |
+| `orchestrator-scope-discovery.md` | Spec do pipeline |
 
 ## Regras
 

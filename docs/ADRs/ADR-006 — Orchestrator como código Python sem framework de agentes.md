@@ -11,7 +11,7 @@ O pipeline da Fase 2 executa 4 subagentes em sequência fixa, com contratos de e
 
 ## Decisão
 
-Implementar o `orchestrator-pre-sales` como uma **função Python async** que executa os 4 subagentes em sequência, sem nenhum framework de orquestração de agentes.
+Implementar o `orchestrator-scope-discovery` como uma **função Python async** que executa os 4 subagentes em sequência, sem nenhum framework de orquestração de agentes.
 
 ## Justificativa
 

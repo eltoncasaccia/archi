@@ -412,7 +412,7 @@ Implementar os 3 endpoints públicos:
 
 ### TASK-010 — Implementar `pipeline/orchestrator.py`
 
-**Refs:** ADR-006, README-orchestrator-pre-sales.md, TECH_SPEC.md §6.3
+**Refs:** ADR-006, README-orchestrator-scope-discovery.md, TECH_SPEC.md §6.3
 
 Implementar a função `run_pipeline(session_id, supabase)` conforme especificado no README do orchestrator:
 

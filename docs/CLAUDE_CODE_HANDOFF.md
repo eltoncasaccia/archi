@@ -14,11 +14,11 @@
 Confirme que a estrutura de pastas está assim:
 
 ```
-PRE-SALES/                     ← pasta raiz do projeto
+SCOPE-DISCOVERY/               ← pasta raiz do projeto
 ├── docs/
 │   ├── ADRs/                  ← 9 arquivos ADR-001 a ADR-009
 │   ├── archi-design/         ← bundle do Claude Design
-│   ├── orchestrator-pre-sales.md
+│   ├── orchestrator-scope-discovery.md
 │   ├── SCREENS.md
 │   ├── TASKS.md
 │   ├── TECH SPEC — Archi.md
