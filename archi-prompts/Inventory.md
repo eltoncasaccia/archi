@@ -9,7 +9,7 @@
 | 3 | agent-pricing | subagent | 2 | 1.0.0 | — | — | ✅ Pronto |
 | 4 | agent-phases | subagent | 2 | 1.0.0 | — | — | ✅ Pronto |
 | 5 | agent-proposal-generator | subagent | 2 | 1.0.0 | docx (ou pdf) | — | ✅ Pronto |
-| 6 | orchestrator-scope-discovery | orchestrator | 2 | — | — | — | ⏳ Pendente |
+| 6 | orchestrator-scope-discovery | orchestrator | 2 | — | — | — | ✅ Pronto |
 
 ---
 
@@ -96,6 +96,6 @@ prompts/
 
 ## Pendências (próxima sessão)
 
-- [ ] orchestrator-scope-discovery (prompt + README)
+- [x] orchestrator-scope-discovery (implementado em `/archi-api/app/pipeline/orchestrator.py`)
 - [ ] prompt.tests.yaml para cada agent
 - [ ] Arquitetura técnica (gerenciamento de estado, retry, painel administrativo, pipeline de e-mail)

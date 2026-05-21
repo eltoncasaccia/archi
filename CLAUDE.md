@@ -101,6 +101,13 @@ Ver `docs/PREREQUISITES.md` para onde obter cada chave.
 2. **Pergunte antes de implementar** se algo não estiver claro nos docs
 3. **Não instale bibliotecas sem confirmar** — use `uv add <pacote>` no backend, `npm install <pacote>` no frontend
 4. **Carregue apenas os arquivos da tarefa atual** — não leia toda a documentação de uma vez
+5. **Documentação sempre atualizada** — Antes de QUALQUER alteração no codebase:
+   - Consulte a documentação relevante (`docs/`, `TECH SPEC`, `orchestrator-scope-discovery.md`, `archi-prompts/Inventory.md`, etc.)
+   - Verifique se a mudança conflita com as regras, decisões (ADRs) ou especificações definidas
+   - Identifique riscos: quebra de sistema, impacto em outros componentes, violação de contrato entre agentes, inconsistências
+   - Se há risco significativo, **pergunte ao usuário** se deve continuar
+   - Se continuar: **atualize todos os documentos afetados** (TECH SPEC, ADRs, specs de prompts, Inventory, schemas, endpoints, etc.)
+   - Se interromper: a mudança não é feita, o documento permanece correto como source of truth
 
 ## Skills instaladas
 
