@@ -14,7 +14,7 @@ from app.models.schemas import ApproveDiscoveryResponse, SendMessageRequest, Upl
 from app.pipeline.orchestrator import run_pipeline
 from app.services.prompt_loader import get_prompt
 from app.services.supabase_client import get_supabase
-from app.services.tracing import get_langfuse
+from langfuse import get_client, observe
 
 router = APIRouter(prefix="/session", tags=["session"])
 
@@ -193,6 +193,25 @@ async def logout_session(session_id: str):
     return {"logged_out": True}
 
 
+@observe(as_type="generation", name="archi-interview")
+def _log_interview_generation(
+    session_id: str,
+    llm_messages: list,
+    full_response: str,
+    input_tokens: int,
+    output_tokens: int,
+) -> str:
+    lf = get_client()
+    lf.update_current_generation(
+        model=settings.litellm_model,
+        input=llm_messages,
+        output=full_response,
+        usage_details={"input": input_tokens, "output": output_tokens},
+    )
+    lf.update_current_trace(name="archi-interview", session_id=session_id)
+    return full_response
+
+
 async def _limit_reached_stream(reason: str):
     msg = "Chegamos ao limite desta sessão. Para projetos de maior escopo, entre em contato diretamente."
     yield f"data: {json.dumps({'delta': msg})}\n\n"
@@ -240,23 +259,7 @@ async def _stream_response(session_id: str, llm_messages: list, session: dict):
         "input_tokens": session["input_tokens"] + input_tokens_used,
     }).eq("id", session_id).execute()
 
-    lf = get_langfuse()
-    if lf:
-        try:
-            generation = lf.start_observation(
-                as_type="generation",
-                name="archi-message",
-                trace_context={"trace_id": session_id.replace("-", "")},
-                model=settings.litellm_model,
-                input=llm_messages,
-                output=full_response,
-                usage_details={"input": input_tokens_used, "output": output_tokens_used},
-            )
-            generation.update_trace(name="archi-interview", session_id=session_id)
-            generation.end()
-            lf.flush()
-        except Exception as lf_err:
-            logger.warning(f"LangFuse generation log failed: {lf_err}")
+    _log_interview_generation(session_id, llm_messages, full_response, input_tokens_used, output_tokens_used)
 
     yield "data: [DONE]\n\n"
 

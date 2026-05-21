@@ -5,10 +5,10 @@ import time
 from typing import Optional
 
 import litellm
+from langfuse import get_client, observe
 
 from app.config import settings
 from app.services.prompt_loader import get_prompt
-from app.services.tracing import get_langfuse
 
 logger = logging.getLogger(__name__)
 
@@ -41,18 +41,20 @@ class PipelineStepError(Exception):
         super().__init__(f"[{step}] {message}")
 
 
-async def _run_step(
-    step_name: str, prompt_name: str, user_input: str, session_id: str, span=None
-) -> str:
+@observe(as_type="generation")
+async def _run_step(step_name: str, prompt_name: str, user_input: str, session_id: str) -> str:
     """Calls LiteLLM for one pipeline step. Retries once on failure."""
     messages = [
         {"role": "system", "content": get_prompt(prompt_name)},
         {"role": "user", "content": user_input},
     ]
 
-    generation = None
-    if span:
-        generation = span.start_observation(as_type="generation", name=step_name, model=settings.litellm_model, input=messages)
+    lf = get_client()
+    lf.update_current_generation(
+        name=step_name,
+        model=settings.litellm_model,
+        input=messages,
+    )
 
     for attempt in range(2):
         try:
@@ -62,30 +64,32 @@ async def _run_step(
                 metadata={"session_id": session_id, "pipeline_step": step_name},
             )
             content = response.choices[0].message.content
-            if generation:
-                usage = getattr(response, "usage", None)
-                generation.update(
-                    output=content,
-                    usage_details={
-                        "input": getattr(usage, "prompt_tokens", 0),
-                        "output": getattr(usage, "completion_tokens", 0),
-                    } if usage else None,
-                )
-                generation.end()
+            usage = getattr(response, "usage", None)
+            lf.update_current_generation(
+                output=content,
+                usage_details={
+                    "input": getattr(usage, "prompt_tokens", 0),
+                    "output": getattr(usage, "completion_tokens", 0),
+                } if usage else None,
+            )
             return content
         except Exception as e:
             if attempt == 0:
                 logger.warning(f"[{step_name}] falha (tentativa 1): {e}. Retentando em 3s...")
                 await asyncio.sleep(3)
             else:
-                if generation:
-                    generation.update(level="ERROR", status_message=str(e))
-                    generation.end()
                 raise PipelineStepError(step_name, str(e))
 
 
+@observe()
 async def run_pipeline(session_id: str, supabase) -> None:
     sb = supabase
+
+    lf = get_client()
+    lf.update_current_trace(
+        name="pipeline",
+        session_id=session_id,
+    )
 
     async def update_session(fields: dict) -> None:
         await sb.table("sessions").update(fields).eq("id", session_id).execute()
@@ -109,16 +113,6 @@ async def run_pipeline(session_id: str, supabase) -> None:
     await update_session({"status": "pipeline_running"})
     pipeline_start = time.monotonic()
 
-    lf = get_langfuse()
-    trace = None
-    if lf:
-        try:
-            trace_id = session_id.replace("-", "")
-            trace = lf.start_span(name="pipeline", trace_context={"trace_id": trace_id})
-            trace.update_trace(session_id=session_id, name="pipeline")
-        except Exception as lf_err:
-            logger.warning(f"LangFuse trace init failed: {lf_err}")
-
     def _elapsed(since: float) -> str:
         return f"{time.monotonic() - since:.1f}s"
 
@@ -131,7 +125,6 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "agent-discovery-generator",
             discovery_approved,
             session_id,
-            span=trace,
         )
         logger.info(f"[{session_id}] ✓ Etapa 1/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -150,7 +143,6 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "agent-pricing",
             pricing_input,
             session_id,
-            span=trace,
         )
         logger.info(f"[{session_id}] ✓ Etapa 2/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -167,7 +159,6 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "agent-phases",
             phases_input,
             session_id,
-            span=trace,
         )
         logger.info(f"[{session_id}] ✓ Etapa 3/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -196,7 +187,6 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "agent-proposal-generator",
             proposal_input,
             session_id,
-            span=trace,
         )
         logger.info(f"[{session_id}] ✓ Etapa 4/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -227,16 +217,12 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "pipeline_completed",
             f"Proposta pronta para revisão. ID: {proposal_id}",
         )
-        if trace:
-            trace.update(output={"proposal_id": proposal_id})
-            trace.end()
+        lf.update_current_trace(output={"proposal_id": proposal_id})
         logger.info(f"[{session_id}] ✅ Pipeline concluído em {_elapsed(pipeline_start)}. Proposta: {proposal_id}")
 
     except PipelineStepError as e:
         logger.error(f"[{session_id}] Pipeline falhou em '{e.step}': {e.message}")
-        if trace:
-            trace.update(level="ERROR", status_message=f"[{e.step}] {e.message}")
-            trace.end()
+        lf.update_current_span(level="ERROR", status_message=f"[{e.step}] {e.message}")
         await update_session({
             "status": "pipeline_error",
             "error_step": e.step,
@@ -248,9 +234,7 @@ async def run_pipeline(session_id: str, supabase) -> None:
         )
     except Exception as e:
         logger.error(f"[{session_id}] Erro inesperado no pipeline: {e}")
-        if trace:
-            trace.update(level="ERROR", status_message=str(e))
-            trace.end()
+        lf.update_current_span(level="ERROR", status_message=str(e))
         await update_session({
             "status": "pipeline_error",
             "error_step": "unknown",
@@ -260,6 +244,3 @@ async def run_pipeline(session_id: str, supabase) -> None:
             "pipeline_error",
             f"Erro inesperado no pipeline: {str(e)[:200]}",
         )
-    finally:
-        if lf:
-            lf.flush()
