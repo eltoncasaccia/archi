@@ -157,13 +157,15 @@ Canal de notificação a definir na implementação (email via Resend ou webhook
 
 ## Localização no repositório
 
-```
-prompts/scope-discovery/
-└── orchestrator-scope-discovery/
-    └── README.md          ← este arquivo
-```
+| Artefato | Caminho |
+|---|---|
+| Implementação | [`archi-api/app/pipeline/orchestrator.py`](../../archi-api/app/pipeline/orchestrator.py) |
+| Endpoint que dispara | [`archi-api/app/routers/pipeline.py`](../../archi-api/app/routers/pipeline.py) |
+| Esta spec | `docs/reference/orchestrator.md` |
 
-Não há `prompt.yaml` — o orchestrator é implementado como código Python em `/backend/pipeline/orchestrator.py`.
+Não há `prompt.yaml`: o orchestrator não é um agente LLM, é código Python determinístico
+(ver [ADR-006](../adr/adr-006-orchestrator-sem-framework.md)). Por isso ele não vive em
+`archi-prompts/` nem é publicado no LangFuse.
 
 ---
 
