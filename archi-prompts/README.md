@@ -66,6 +66,41 @@ código da produção, não uma reimplementação que poderia divergir.
 faz sentido nem se a entrevista ficou boa. Isso é a camada 2, que exige chamar o modelo,
 discoveries reais e faixas de preço aceitáveis para julgar contra.
 
+## Como isto se atualiza sozinho
+
+Os casos vivem em [`evals/casos-reais.yaml`](evals/casos-reais.yaml). Hoje são sintéticos,
+calibrados pelo modelo de preço da produção. Substituir por reais é o objetivo — mas as
+duas metades de um caso se atualizam de formas diferentes, e confundir isso quebra a eval.
+
+**Os discoveries, sim.** Toda entrevista concluída grava o bloco em
+`sessions.discovery_approved`. Colher, anonimizar nome/email/empresa e acrescentar ao
+arquivo é trabalho mecânico. A carteira de casos cresce sozinha com o uso.
+
+**As faixas de preço, não — e insistir nisso produz uma eval que mente.** Se o valor
+esperado vier da estimativa que o próprio `agent-pricing` produziu, a eval passa a
+comparar o agente com ele mesmo. Ela vai passar sempre, inclusive enquanto o agente
+estiver consistentemente errado. Uma eval circular é pior que nenhuma: dá confiança sem
+dar informação.
+
+**O que dá verdade de preço é o desfecho comercial**, e o sistema não captura isso hoje.
+O enum `proposal_status` vai até `sent` — rastreia o fluxo interno (revisar, aprovar,
+enviar), não o que aconteceu depois: o cliente fechou? Por quanto? Quantas horas custou
+de fato?
+
+Para fechar esse laço faltam três campos em `proposals`:
+
+| Campo | Para quê |
+|---|---|
+| `desfecho` | ganhou / perdeu / negociando |
+| `valor_fechado` | quanto o cliente de fato pagou |
+| `horas_reais` | quanto custou entregar |
+
+Com eles, a faixa aceitável de cada caso deixa de ser opinião e passa a ser histórico:
+"projetos com este perfil fecharam entre R$ X e R$ Y, e custaram Z horas". É o mesmo dado
+que sustenta a ideia de RAG sobre projetos passados — a estimativa deixa de ser palpite do
+modelo e passa a ser ancorada no que a empresa já entregou. E é um moat que cresce com o
+uso: um concorrente novo não tem esse histórico.
+
 ## Como os prompts chegam ao runtime
 
 ```

@@ -1,30 +1,66 @@
-# Casos reais para a eval de qualidade (camada 2)
+# Casos para a eval de qualidade (camada 2)
 #
-# COMO USAR
-# Copie o bloco "- name:" abaixo do exemplo, uma vez por projeto REAL que você já
-# vendeu, e preencha. São duas partes:
+# ORIGEM DESTES CASOS
+# São SINTÉTICOS, escritos em 06/09/2026 porque ainda não havia histórico real.
+# Não são clientes que existiram. O que os torna utilizáveis é a calibragem:
 #
-#   discovery       — os 18 campos, como aquele cliente teria descrito o projeto
-#   preco_aceitavel — a faixa que você defenderia na frente do cliente
+#   - As faixas de preço saem da composição de módulos de cada caso multiplicada
+#     pelos parâmetros que a produção usa de fato (R$ 150/h, margem 20%, e as
+#     faixas de esforço dos defaults de config.py) — não de chute.
+#   - Os totais resultantes ficam dentro do mercado brasileiro de 2026: sistema
+#     web sob medida vai de R$ 30k a R$ 600k+, hora de software house entre
+#     R$ 120 e R$ 280. Estes casos caem entre R$ 18k e R$ 209k.
 #
-# Por que projeto REAL e não inventado: com projeto que você vendeu, você já tem o
-# gabarito — sabe quanto cobrou e quanto custou. Caso inventado só prova que o
-# modelo é coerente com a ficção que alguém escreveu.
+# SUBSTITUA POR CASOS REAIS ASSIM QUE HOUVER.
+# Caso sintético prova que o agente é internamente coerente. Só caso real, com o
+# valor que você de fato fechou, prova que ele estima certo. Ver "Como isto se
+# atualiza sozinho" em archi-prompts/README.md.
 #
-# Anonimize: troque nome, email e empresa por fictícios. Setor, escopo, volume e
-# preço mantenha REAIS — é neles que a eval mexe.
-#
-# Meta: 5 a 10 casos, cobrindo faixas diferentes (um pequeno, uns médios, um grande)
-# e pelo menos um com dado sensível (saúde, financeiro) e um com integração externa.
+# Tolerância usada nas faixas: piso de -25% a +30% sobre o cálculo, teto de -15%
+# a +45%. É folga deliberada — a eval existe para pegar erro de ordem de
+# grandeza (R$ 5k num sistema hospitalar), não para exigir precisão de centavo.
 
 casos:
   # ===========================================================================
-  # EXEMPLO PREENCHIDO — leia este, depois apague e escreva os seus
+  # 1 — Pequeno, sem integração, sem dado sensível
+  # Módulos: Baixa + Baixa + Média + Baixa  →  R$ 18.000 – 27.000
+  # ===========================================================================
+  - name: portal_institucional_area_cliente
+    origem: "Sintético. Piso da carteira: projeto simples, sem integração externa."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Renata Peixoto
+      email_cliente: renata@escritoriopeixoto.adv.br
+      empresa: Peixoto Advogados Associados
+      setor: Serviços jurídicos — escritório de advocacia de pequeno porte
+      problema_central: O site atual é uma página estática desatualizada e os clientes pedem cópias de documentos por WhatsApp o tempo todo, consumindo horas da secretária.
+      processos_atuais: Site institucional feito há seis anos, sem painel de edição. Documentos são enviados por WhatsApp ou email, um a um, quando o cliente pede.
+      funcionalidades_solicitadas: Site institucional editável pela própria equipe; área do cliente com login para baixar documentos do processo; painel administrativo para subir documentos e vinculá-los a cada cliente.
+      perfis_de_usuarios: Cliente do escritório, secretária, advogado sócio.
+      permissoes_mencionadas: Cliente vê apenas os próprios documentos. Secretária sobe documentos. Sócio vê tudo.
+      integracoes: Nenhuma. Perguntado sobre integrar com sistema de processos, disse que não é necessário agora.
+      ia_e_automacao: Nenhuma solicitada.
+      relatorios_e_dados: Apenas quantos acessos por cliente, para saber se estão usando.
+      dados_sensiveis: Documentos processuais, mas sem dado de saúde ou financeiro. Confidencialidade normal de advocacia.
+      volume_operacional: Cerca de 120 clientes ativos, 4 usuários internos, uso esporádico.
+      restricoes_comerciais: Sem data crítica. Mencionou que "não pode ser caro, somos um escritório pequeno".
+      documentos_recebidos: Nenhum.
+      lacunas_e_indefinicoes: Não definiu se quer notificação por email quando um documento novo é publicado.
+      notas_do_entrevistador: Decisora é a própria Renata. Escopo pequeno e bem delimitado, sem risco técnico aparente.
+      [/DISCOVERY_APROVADO]
+    preco_aceitavel:
+      total_minimo_entre: [13000, 24000]
+      total_maximo_entre: [23000, 40000]
+    espera:
+      - "nenhum risco crítico sinalizado — escopo simples e fechado"
+      - "não deve exigir discovery adicional"
+
+  # ===========================================================================
+  # 2 — Médio, dado sensível de saúde, integração de risco
+  # Módulos: Alta + Média + Alta + Média + Média  →  R$ 50.400 – 75.600
   # ===========================================================================
   - name: clinica_prontuario_eletronico
-    # Uma linha sobre o projeto real por trás deste caso, para você se lembrar depois
-    origem: "Projeto vendido em 2025 para clínica de médio porte. Cobramos R$ 72k, entregue em 4 meses."
-
+    origem: "Sintético. Caso central: porte médio com LGPD e integração incerta."
     discovery: |
       [DISCOVERY_APROVADO]
       nome_cliente: Marina Alves
@@ -36,7 +72,7 @@ casos:
       funcionalidades_solicitadas: Prontuário eletrônico por paciente com histórico; agenda com confirmação por WhatsApp; cadastro de convênios; emissão de guias; relatório de produtividade por médico.
       perfis_de_usuarios: Recepcionista, médico, gestor da clínica.
       permissoes_mencionadas: Médico vê apenas os próprios pacientes. Gestor vê tudo. Recepção não acessa conteúdo clínico.
-      integracoes: Portal de convênio (Unimed) para envio de guias. WhatsApp para confirmação de consulta.
+      integracoes: Portal de convênio (operadora regional) para envio de guias. WhatsApp para confirmação de consulta.
       ia_e_automacao: Mencionou "seria bom se transcrevesse a consulta", sem detalhar. Não é prioridade da primeira fase.
       relatorios_e_dados: Produtividade por médico, faturamento por convênio, taxa de falta.
       dados_sensiveis: Sim — dados de saúde, sujeitos a LGPD com tratamento de dado sensível.
@@ -46,49 +82,183 @@ casos:
       lacunas_e_indefinicoes: Não definiu se migra o histórico em papel. Não sabe se a operadora tem API ou só portal web.
       notas_do_entrevistador: Decisora é a própria Marina, sócia da clínica. A integração com a operadora é o maior risco — pode não haver API.
       [/DISCOVERY_APROVADO]
-
-    # A faixa que você defenderia. Não é o preço exato: é o intervalo dentro do
-    # qual a estimativa está sã. Fora disso, o agente errou.
     preco_aceitavel:
-      total_minimo_entre: [40000, 65000]
-      total_maximo_entre: [70000, 110000]
-
-    # Comportamentos que este caso DEVE provocar. Opcional, mas é onde a eval
-    # fica afiada: aqui você codifica julgamento que hoje só existe na sua cabeça.
+      total_minimo_entre: [38000, 66000]
+      total_maximo_entre: [64000, 110000]
     espera:
       - "risco de integração sinalizado: a operadora pode não ter API"
       - "dado sensível de saúde reconhecido (LGPD)"
       - "transcrição por IA fica fora do MVP, na fase 2 indicativa"
 
   # ===========================================================================
-  # SEUS CASOS — copie o bloco acima e preencha. Apague este comentário.
+  # 3 — Dado financeiro sensível, integração bancária de alta complexidade
+  # Módulos: Baixa + Muito Alta + Média + Alta + Média + Média  →  R$ 66.600 – 95.400
   # ===========================================================================
+  - name: contabil_conciliacao_bancaria
+    origem: "Sintético. Testa se Open Finance é classificado como Muito Alta."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Paulo Nakamura
+      email_cliente: paulo@nakamuracontabil.com.br
+      empresa: Nakamura Assessoria Contábil
+      setor: Serviços contábeis — escritório atendendo pequenas e médias empresas
+      problema_central: A conciliação bancária dos clientes é feita à mão, comparando extrato em PDF com lançamentos digitados. Consome três dias úteis por mês por cliente e gera erro.
+      processos_atuais: Cliente envia extrato em PDF por email. Analista digita ou copia os lançamentos numa planilha e compara linha a linha com o razão. Divergência é resolvida por telefone.
+      funcionalidades_solicitadas: Cadastro de empresas clientes; importação automática de extratos via Open Finance; conciliação com sugestão automática de correspondência; lançamentos contábeis; relatórios fiscais mensais; painel com pendências por cliente.
+      perfis_de_usuarios: Analista contábil, supervisor, sócio, e o cliente final com acesso somente leitura.
+      permissoes_mencionadas: Analista vê apenas as empresas atribuídas a ele. Supervisor vê a carteira toda. Cliente vê só a própria empresa e não edita.
+      integracoes: Open Finance para leitura de extrato bancário. Mencionou também querer emitir guias no futuro, sem detalhar.
+      ia_e_automacao: Sugestão automática de correspondência entre lançamento e extrato. Aceita que comece por regras, sem modelo treinado.
+      relatorios_e_dados: Balancete, razão, relatório de pendências de conciliação, e um resumo mensal por cliente.
+      dados_sensiveis: Sim — dados financeiros e bancários de terceiros. Exige trilha de auditoria.
+      volume_operacional: 85 empresas clientes, cerca de 12 mil lançamentos por mês no total, 9 usuários internos.
+      restricoes_comerciais: Sem data crítica rígida, mas quer começar antes do fechamento do próximo exercício. Não deu valor de orçamento; pediu para ver a estimativa primeiro.
+      documentos_recebidos: Planilha modelo de conciliação e um extrato de exemplo anonimizado.
+      lacunas_e_indefinicoes: Não definiu quais bancos precisam ser suportados no lançamento. Não decidiu se o cliente final terá acesso já na primeira fase.
+      notas_do_entrevistador: Decisão passa pelo Paulo e por mais um sócio. Open Finance exige certificação e homologação — é o item de maior risco e prazo.
+      [/DISCOVERY_APROVADO]
+    preco_aceitavel:
+      total_minimo_entre: [50000, 87000]
+      total_maximo_entre: [81000, 138000]
+    espera:
+      - "Open Finance classificado como complexidade Muito Alta"
+      - "risco regulatório/homologação bancária sinalizado"
+      - "trilha de auditoria tratada como requisito, não como extra"
 
-  # - name:
-  #   origem: "Projeto vendido em ____. Cobramos R$ ____, entregue em ____ meses."
-  #   discovery: |
-  #     [DISCOVERY_APROVADO]
-  #     nome_cliente:
-  #     email_cliente:
-  #     empresa:
-  #     setor:
-  #     problema_central:
-  #     processos_atuais:
-  #     funcionalidades_solicitadas:
-  #     perfis_de_usuarios:
-  #     permissoes_mencionadas:
-  #     integracoes:
-  #     ia_e_automacao:
-  #     relatorios_e_dados:
-  #     dados_sensiveis:
-  #     volume_operacional:
-  #     restricoes_comerciais:
-  #     documentos_recebidos:
-  #     lacunas_e_indefinicoes:
-  #     notas_do_entrevistador:
-  #     [/DISCOVERY_APROVADO]
-  #   preco_aceitavel:
-  #     total_minimo_entre: [ , ]
-  #     total_maximo_entre: [ , ]
-  #   espera:
-  #     -
+  # ===========================================================================
+  # 4 — Grande, IA de verdade no núcleo, múltiplas integrações
+  # Módulos: M + MA + A + A + A + A + M  →  R$ 99.000 – 144.000
+  # ===========================================================================
+  - name: logistica_roteirizacao_ia
+    origem: "Sintético. Teto da carteira: IA no núcleo do produto, não como enfeite."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Cláudia Bertoldo
+      email_cliente: claudia@translevebertoldo.com.br
+      empresa: TransLeve Bertoldo Transportes
+      setor: Logística — transporte rodoviário de carga fracionada
+      problema_central: A roteirização das entregas é feita por um funcionário experiente no papel. Quando ele falta, a operação atrasa. Não há previsibilidade de entrega para o cliente final.
+      processos_atuais: Pedidos chegam por email e planilha do embarcador. Um funcionário monta as rotas manualmente considerando região e peso. Motorista recebe a lista impressa. Status é atualizado por telefone.
+      funcionalidades_solicitadas: Cadastro de frota e motoristas; roteirização automática considerando janela de entrega, peso e capacidade; rastreamento em tempo real; aplicativo do motorista com comprovante de entrega; integração com o ERP do embarcador; painel de indicadores; controle de acesso por empresa embarcadora.
+      perfis_de_usuarios: Operador logístico, motorista, gestor, e o embarcador com acesso restrito à própria carga.
+      permissoes_mencionadas: Embarcador vê apenas as próprias entregas. Motorista vê apenas a rota do dia. Gestor vê tudo.
+      integracoes: ERP do embarcador principal (SAP, via API REST). Provedor de mapas e cálculo de rota. Rastreador veicular já instalado na frota.
+      ia_e_automacao: Núcleo do projeto — otimização de rota com restrições. Cliente entende que não é trivial e citou querer "algo que aprenda com o histórico de entregas".
+      relatorios_e_dados: Entregas no prazo, custo por rota, ocupação da frota, tempo médio por parada.
+      dados_sensiveis: Endereço de destinatário final. Sem dado de saúde ou financeiro.
+      volume_operacional: 34 veículos, cerca de 2.800 entregas por mês, picos de 40 usuários simultâneos.
+      restricoes_comerciais: Quer piloto rodando em 4 meses para apresentar ao maior embarcador na renovação do contrato. Orçamento sinalizado: "na casa dos R$ 150 mil, se o retorno fizer sentido".
+      documentos_recebidos: Planilha de pedidos do embarcador e a documentação da API do rastreador.
+      lacunas_e_indefinicoes: Não definiu se o app do motorista precisa funcionar offline. Não sabe se o SAP do embarcador expõe os campos necessários.
+      notas_do_entrevistador: Decisão da Cláudia com aval do sócio. Roteirização com restrições é problema de otimização de verdade — risco alto de subestimar. Offline no app pode dobrar o esforço daquele módulo.
+      [/DISCOVERY_APROVADO]
+    preco_aceitavel:
+      total_minimo_entre: [74000, 129000]
+      total_maximo_entre: [122000, 209000]
+    espera:
+      - "roteirização classificada como Muito Alta, não como Alta"
+      - "requer_discovery_adicional para o app offline e para os campos do SAP"
+      - "risco de subestimar otimização com restrições sinalizado"
+
+  # ===========================================================================
+  # 5 — Marketplace com pagamento split
+  # Módulos: M + A + M + A + B + M  →  R$ 54.000 – 81.000
+  # ===========================================================================
+  - name: marketplace_servicos_split
+    origem: "Sintético. Testa se pagamento com split entra como Alta e vira risco."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Diego Ferraz
+      email_cliente: diego@reformaja.com.br
+      empresa: ReformaJá
+      setor: Marketplace de serviços — reformas residenciais
+      problema_central: Hoje o negócio conecta cliente e prestador por WhatsApp e cobra comissão na confiança. Muitos prestadores fecham por fora e a empresa perde a comissão.
+      processos_atuais: Cliente manda pedido pelo Instagram, um atendente indica prestadores de uma planilha, e a comissão é cobrada por boleto depois do serviço — quando o prestador informa.
+      funcionalidades_solicitadas: Cadastro de clientes e de prestadores com verificação de documento; busca de prestador por categoria e região; agendamento do serviço; pagamento na plataforma com repasse automático ao prestador descontando a comissão; avaliação após o serviço; painel administrativo.
+      perfis_de_usuarios: Cliente final, prestador de serviço, administrador da plataforma.
+      permissoes_mencionadas: Prestador vê apenas os próprios chamados e repasses. Cliente vê os próprios pedidos. Admin vê tudo e pode bloquear prestador.
+      integracoes: Gateway de pagamento com split de recebíveis. Verificação de CPF/CNPJ do prestador.
+      ia_e_automacao: Mencionou querer "recomendar o melhor prestador automaticamente". Aceita começar por ordenação simples por avaliação e distância.
+      relatorios_e_dados: Volume transacionado, comissão apurada, prestadores mais acionados, taxa de cancelamento.
+      dados_sensiveis: CPF/CNPJ e dados bancários dos prestadores para repasse.
+      volume_operacional: Estima 400 serviços por mês no primeiro ano, 60 prestadores cadastrados.
+      restricoes_comerciais: Quer lançar antes da alta temporada de reformas, em cerca de 6 meses. Não deu valor; disse que "tem investidor anjo envolvido".
+      documentos_recebidos: Apresentação do modelo de negócio.
+      lacunas_e_indefinicoes: Não escolheu o gateway de pagamento. Não definiu política de reembolso e cancelamento, que afeta diretamente o fluxo de split.
+      notas_do_entrevistador: Decisão do Diego com o investidor. O split de pagamento é o item que mais pode escapar do escopo: regra de reembolso indefinida trava o desenho do fluxo financeiro.
+      [/DISCOVERY_APROVADO]
+    preco_aceitavel:
+      total_minimo_entre: [40000, 70000]
+      total_maximo_entre: [69000, 117000]
+    espera:
+      - "pagamento com split classificado como Alta, no mínimo"
+      - "política de reembolso indefinida sinalizada como risco de escopo"
+      - "recomendação automática fica fora do MVP"
+
+  # ===========================================================================
+  # 6 — Migração de legado
+  # Módulos: MA + A + A + MA + M + M  →  R$ 97.200 – 136.800
+  # ===========================================================================
+  - name: migracao_legado_distribuidora
+    origem: "Sintético. Migração de dados históricos é o item que mais se subestima."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Sérgio Vasques
+      email_cliente: sergio@distvasques.com.br
+      empresa: Distribuidora Vasques
+      setor: Distribuição — materiais de construção, atacado
+      problema_central: O sistema atual é um Delphi de 2009 que roda só nas máquinas do escritório. Não há acesso remoto, o fornecedor original sumiu e cada erro para a operação.
+      processos_atuais: Pedidos digitados no sistema antigo pelo televendas. Estoque conferido por planilha paralela porque o sistema "erra o saldo". Nota fiscal emitida em outro programa, digitando de novo.
+      funcionalidades_solicitadas: Migração dos dados históricos (clientes, produtos, 14 anos de pedidos); controle de estoque com múltiplos depósitos; pedidos de venda; emissão de NF-e integrada; relatórios gerenciais; controle de acesso por perfil.
+      perfis_de_usuarios: Televendas, estoquista, financeiro, gerente.
+      permissoes_mencionadas: Televendas não vê custo do produto. Estoquista não vê preço de venda. Gerente vê tudo.
+      integracoes: SEFAZ para NF-e. Mencionou querer integrar com o e-commerce que pretende abrir, mas não neste projeto.
+      ia_e_automacao: Nenhuma solicitada. Perguntado, disse que "sugestão de reposição seria bom um dia".
+      relatorios_e_dados: Curva ABC de produtos, giro de estoque, comissão por vendedor, inadimplência.
+      dados_sensiveis: Dados fiscais e cadastrais de clientes PJ. Sem dado pessoal sensível.
+      volume_operacional: 3.200 SKUs, cerca de 1.100 pedidos por mês, 18 usuários internos.
+      restricoes_comerciais: Precisa virar antes da fiscalização estadual anunciada para daqui a 8 meses. Orçamento: "não passar de R$ 200 mil".
+      documentos_recebidos: Print das telas do sistema atual e um backup do banco Firebird.
+      lacunas_e_indefinicoes: Não definiu se migra os 14 anos ou só os últimos 3. Não sabe se o banco antigo tem integridade referencial.
+      notas_do_entrevistador: Decisão do Sérgio, dono. A migração é o maior risco: banco Firebird antigo, sem documentação, e a decisão de quantos anos migrar muda muito o esforço. NF-e tem homologação na SEFAZ com prazo próprio.
+      [/DISCOVERY_APROVADO]
+    preco_aceitavel:
+      total_minimo_entre: [73000, 126000]
+      total_maximo_entre: [116000, 198000]
+    espera:
+      - "migração de dados classificada como Muito Alta"
+      - "requer_discovery_adicional para a integridade do banco Firebird"
+      - "homologação de NF-e na SEFAZ tratada como prazo externo, fora do controle do time"
+
+  # ===========================================================================
+  # 7 — Escopo vago: não testa preço, testa se o agente se recusa a chutar
+  # ===========================================================================
+  - name: escopo_vago_deve_pedir_discovery
+    origem: "Sintético. Caso de guarda: o agente deve sinalizar, não inventar número."
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Alex Moura
+      email_cliente: alex@startupideia.com
+      empresa: não mencionado
+      setor: não mencionado
+      problema_central: Quer "um sistema com inteligência artificial para melhorar o negócio". Não soube dizer qual negócio nem qual processo.
+      processos_atuais: não mencionado
+      funcionalidades_solicitadas: Mencionou "dashboard", "IA" e "automação", sem exemplo concreto em nenhum dos três, mesmo quando perguntado diretamente.
+      perfis_de_usuarios: não mencionado
+      permissoes_mencionadas: não mencionado
+      integracoes: não mencionado
+      ia_e_automacao: Citado como desejo central, sem nenhum exemplo do que a IA faria.
+      relatorios_e_dados: não mencionado
+      dados_sensiveis: não mencionado
+      volume_operacional: não mencionado
+      restricoes_comerciais: Não informou prazo nem orçamento. Disse que "depende da proposta".
+      documentos_recebidos: Nenhum.
+      lacunas_e_indefinicoes: Praticamente tudo. Não há problema central definido, nem processo atual, nem usuários.
+      notas_do_entrevistador: Não houve informação suficiente para dimensionar escopo. Recomendo discovery pago antes de qualquer estimativa.
+      [/DISCOVERY_APROVADO]
+    # Sem faixa: qualquer número aqui seria invenção. O acerto é NÃO estimar.
+    preco_aceitavel: null
+    espera:
+      - "requer_discovery_adicional marcado para o projeto inteiro"
+      - "não deve apresentar total_minimo e total_maximo como se fossem confiáveis"
+      - "lacunas listadas explicitamente como bloqueio para precificar"
