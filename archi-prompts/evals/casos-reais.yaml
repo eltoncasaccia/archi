@@ -1,0 +1,94 @@
+# Casos reais para a eval de qualidade (camada 2)
+#
+# COMO USAR
+# Copie o bloco "- name:" abaixo do exemplo, uma vez por projeto REAL que você já
+# vendeu, e preencha. São duas partes:
+#
+#   discovery       — os 18 campos, como aquele cliente teria descrito o projeto
+#   preco_aceitavel — a faixa que você defenderia na frente do cliente
+#
+# Por que projeto REAL e não inventado: com projeto que você vendeu, você já tem o
+# gabarito — sabe quanto cobrou e quanto custou. Caso inventado só prova que o
+# modelo é coerente com a ficção que alguém escreveu.
+#
+# Anonimize: troque nome, email e empresa por fictícios. Setor, escopo, volume e
+# preço mantenha REAIS — é neles que a eval mexe.
+#
+# Meta: 5 a 10 casos, cobrindo faixas diferentes (um pequeno, uns médios, um grande)
+# e pelo menos um com dado sensível (saúde, financeiro) e um com integração externa.
+
+casos:
+  # ===========================================================================
+  # EXEMPLO PREENCHIDO — leia este, depois apague e escreva os seus
+  # ===========================================================================
+  - name: clinica_prontuario_eletronico
+    # Uma linha sobre o projeto real por trás deste caso, para você se lembrar depois
+    origem: "Projeto vendido em 2025 para clínica de médio porte. Cobramos R$ 72k, entregue em 4 meses."
+
+    discovery: |
+      [DISCOVERY_APROVADO]
+      nome_cliente: Marina Alves
+      email_cliente: marina@clinicaexemplo.com.br
+      empresa: Clínica Exemplo
+      setor: Saúde — clínica multiespecialidade
+      problema_central: Prontuários em papel e agenda em planilha. Perde-se histórico do paciente entre consultas e há retrabalho no faturamento de convênios.
+      processos_atuais: Recepção agenda por telefone e anota em planilha compartilhada. Médico escreve em ficha de papel arquivada por ordem alfabética. Faturamento de convênio é digitado manualmente no portal de cada operadora.
+      funcionalidades_solicitadas: Prontuário eletrônico por paciente com histórico; agenda com confirmação por WhatsApp; cadastro de convênios; emissão de guias; relatório de produtividade por médico.
+      perfis_de_usuarios: Recepcionista, médico, gestor da clínica.
+      permissoes_mencionadas: Médico vê apenas os próprios pacientes. Gestor vê tudo. Recepção não acessa conteúdo clínico.
+      integracoes: Portal de convênio (Unimed) para envio de guias. WhatsApp para confirmação de consulta.
+      ia_e_automacao: Mencionou "seria bom se transcrevesse a consulta", sem detalhar. Não é prioridade da primeira fase.
+      relatorios_e_dados: Produtividade por médico, faturamento por convênio, taxa de falta.
+      dados_sensiveis: Sim — dados de saúde, sujeitos a LGPD com tratamento de dado sensível.
+      volume_operacional: 12 médicos, cerca de 900 consultas por mês, 4 usuários simultâneos no pico.
+      restricoes_comerciais: Precisa estar no ar antes da renovação do contrato com a operadora, em 5 meses. Orçamento mencionado pelo cliente: "até uns R$ 80 mil".
+      documentos_recebidos: Planilha da agenda atual e um modelo de guia de convênio.
+      lacunas_e_indefinicoes: Não definiu se migra o histórico em papel. Não sabe se a operadora tem API ou só portal web.
+      notas_do_entrevistador: Decisora é a própria Marina, sócia da clínica. A integração com a operadora é o maior risco — pode não haver API.
+      [/DISCOVERY_APROVADO]
+
+    # A faixa que você defenderia. Não é o preço exato: é o intervalo dentro do
+    # qual a estimativa está sã. Fora disso, o agente errou.
+    preco_aceitavel:
+      total_minimo_entre: [40000, 65000]
+      total_maximo_entre: [70000, 110000]
+
+    # Comportamentos que este caso DEVE provocar. Opcional, mas é onde a eval
+    # fica afiada: aqui você codifica julgamento que hoje só existe na sua cabeça.
+    espera:
+      - "risco de integração sinalizado: a operadora pode não ter API"
+      - "dado sensível de saúde reconhecido (LGPD)"
+      - "transcrição por IA fica fora do MVP, na fase 2 indicativa"
+
+  # ===========================================================================
+  # SEUS CASOS — copie o bloco acima e preencha. Apague este comentário.
+  # ===========================================================================
+
+  # - name:
+  #   origem: "Projeto vendido em ____. Cobramos R$ ____, entregue em ____ meses."
+  #   discovery: |
+  #     [DISCOVERY_APROVADO]
+  #     nome_cliente:
+  #     email_cliente:
+  #     empresa:
+  #     setor:
+  #     problema_central:
+  #     processos_atuais:
+  #     funcionalidades_solicitadas:
+  #     perfis_de_usuarios:
+  #     permissoes_mencionadas:
+  #     integracoes:
+  #     ia_e_automacao:
+  #     relatorios_e_dados:
+  #     dados_sensiveis:
+  #     volume_operacional:
+  #     restricoes_comerciais:
+  #     documentos_recebidos:
+  #     lacunas_e_indefinicoes:
+  #     notas_do_entrevistador:
+  #     [/DISCOVERY_APROVADO]
+  #   preco_aceitavel:
+  #     total_minimo_entre: [ , ]
+  #     total_maximo_entre: [ , ]
+  #   espera:
+  #     -
