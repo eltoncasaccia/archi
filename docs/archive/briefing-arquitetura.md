@@ -1,3 +1,8 @@
+> ⚠️ **Documento histórico — arquivado.**
+> Briefing de uma sessão de arquitetura. Descreve o `orchestrator-scope-discovery` como
+> pendente; ele já foi implementado em `archi-api/app/pipeline/orchestrator.py`.
+> Estrutura atual: veja o [README](../../README.md).
+
 # Briefing — Sessão de Arquitetura
 ## Sistema Autônomo de Pré-Venda
 

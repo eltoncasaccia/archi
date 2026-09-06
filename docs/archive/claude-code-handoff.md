@@ -1,3 +1,8 @@
+> ⚠️ **Documento histórico — arquivado.**
+> Roteiro de implementação inicial, já executado.
+> Os caminhos de arquivo citados aqui referem-se ao layout anterior à reorganização
+> (`docs/` plano, `scripts/db_setup.sql`). Estrutura atual: veja o [README](../../README.md).
+
 # CLAUDE_CODE_HANDOFF.md — Archi
 ## Passo a Passo para Implementação com Claude Code
 
@@ -44,7 +49,7 @@ SCOPE-DISCOVERY/               ← pasta raiz do projeto
 Abra o terminal na pasta raiz do projeto e inicie o Claude Code:
 
 ```bash
-cd ~/projects/PRE-SALES
+cd ~/projects/archi
 claude
 ```
 

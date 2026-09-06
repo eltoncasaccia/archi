@@ -6,59 +6,47 @@ Sistema autônomo de pré-venda de software.
 Clientes conversam com um agente de IA, aprovam o levantamento de requisitos
 e recebem uma proposta comercial por email. O admin revisa e aprova antes do envio.
 
-## Stack
+Visão geral, stack e comandos: veja o [README.md](README.md).
+Este arquivo cobre só o que muda a forma de trabalhar no repositório.
 
-| Camada | Tecnologia |
-|---|---|
-| Backend | FastAPI + Python 3.12 + uv |
-| Frontend | Next.js 14+ (App Router, TypeScript) |
-| LLM | LiteLLM + OpenRouter |
-| Banco | Supabase (PostgreSQL) |
-| Prompts + tracing | LangFuse (cloud — us.cloud.langfuse.com) |
-| Docs gerados | python-docx + WeasyPrint |
-| Email | Resend |
-
-## Estrutura de pastas
+## Estrutura
 
 ```
-SCOPE-DISCOVERY/
-├── docs/               ← documentação (TECH SPEC, SCREENS, ADRs...)
-├── scripts/            ← scripts operacionais (dev.sh, setup.sh, sync_prompts.sh, db_setup.sql)
-├── archi-prompts/     ← prompts dos agentes (YAML)
-├── archi-api/         ← backend FastAPI
-├── archi-web/         ← frontend Next.js
+archi/
+├── archi-api/          ← backend FastAPI
+│   ├── app/            ← routers, services, pipeline, models
+│   └── db/schema.sql   ← schema do Supabase (source of truth)
+├── archi-web/          ← frontend Next.js (App Router)
+├── archi-prompts/      ← prompts dos agentes (YAML)
+├── docs/
+│   ├── reference/      ← tech-spec.md, screens.md, orchestrator.md
+│   ├── adr/            ← adr-001 … adr-009
+│   ├── setup/          ← prerequisites.md
+│   └── archive/        ← histórico, NÃO usar como guia
+├── scripts/
 ├── docker-compose.yml
-├── Makefile
-└── CLAUDE.md
+└── Makefile
 ```
 
-## Ambiente — subir e parar
-
-```bash
-make dev          # sobe api + web (Docker Compose)
-make dev-build    # sobe com rebuild de imagens
-```
-
-Para parar: `Ctrl+C` no terminal onde está rodando, ou `docker compose down` em outro terminal.
-
-## ⚠️ IMPORTANTE — execute comandos dentro do container
+## ⚠️ Execute comandos dentro do container
 
 **Sempre rode comandos no container — nunca no host.
 Omita a flag `-it` (Claude Code não suporta TTY).**
 
 ```bash
-# Backend — exemplos
+# Backend
 docker compose exec api uv run python -c "import app"
 docker compose exec api uv run python scripts/algum_script.py
 
-# Frontend — exemplos
+# Frontend
 docker compose exec web npm run build
 docker compose exec web npx tsc --noEmit
 ```
 
-> Python no container: `uv run` gerencia o venv automaticamente — não é necessário ativar.
-> Localmente (fora do Docker): `cd archi-api && uv run <comando>`, ou ative com
-> `source archi-api/.venv/bin/activate` e rode `python` diretamente.
+> Python no container: `uv run` gerencia o venv automaticamente — não precisa ativar.
+> Localmente (fora do Docker): `cd archi-api && uv run <comando>`.
+
+Subir/parar: `make dev` (ou `make dev-build`); `Ctrl+C`, ou `docker compose down` em outro terminal.
 
 ## Logs
 
@@ -68,45 +56,40 @@ docker compose logs -f web    # frontend em tempo real
 docker compose logs api       # snapshot
 ```
 
-## Migrations / banco de dados
+## Banco de dados
 
-Alterações de schema: execute no **Supabase Dashboard → SQL Editor**, ou via **MCP do Supabase** no Claude Code.
+`archi-api/db/schema.sql` é o **source of truth** do schema.
 
-O arquivo de referência com o schema completo é `scripts/db_setup.sql`.
+Não há ferramenta de migration: alterações de schema são aplicadas à mão no
+**Supabase Dashboard → SQL Editor** (ou via MCP do Supabase). Ao alterar o schema,
+**atualize `archi-api/db/schema.sql` no mesmo commit** — senão ele deixa de refletir o banco.
 
-## Inicialização (primeira vez)
+Tabelas: `sessions`, `messages`, `proposals`, `notifications`, `access_codes`.
+Storage bucket: `proposals`.
 
-```bash
-make setup              # cria .env a partir dos .env.example
-# → preencha archi-api/.env e archi-web/.env.local com suas chaves
-make dev-build          # sobe os serviços
-make sync-prompts       # sincroniza prompts com LangFuse cloud
-```
+## Prompts e LangFuse
 
-Ver `docs/PREREQUISITES.md` para onde obter cada chave.
+Os prompts YAML em `archi-prompts/` **não são lidos em runtime**. O fluxo é:
 
-## Documentação em `docs/`
+1. `make sync-prompts` publica os YAMLs no LangFuse cloud, pelo nome
+2. Na subida da API, `app/services/prompt_loader.py` busca por nome no LangFuse
+3. Fallback: `archi-api/prompts_cache.json` (gerado no primeiro fetch bem-sucedido)
 
-| Arquivo | Conteúdo |
-|---|---|
-| `TECH SPEC — Archi.md` | Arquitetura, stack, schemas, endpoints, env vars |
-| `SCREENS.md` | Comportamento de cada tela |
-| `ADRs/` | 9 decisões arquiteturais |
-| `PREREQUISITES.md` | Pré-requisitos e chaves necessárias |
-| `orchestrator-scope-discovery.md` | Spec do pipeline |
+Os nomes dos 5 prompts estão fixos em `PROMPT_NAMES` (`prompt_loader.py`) e nas chamadas
+de `scripts/sync_prompts.sh`. **Renomear uma pasta de agente exige atualizar os dois.**
 
 ## Regras
 
 1. **Não tome decisões de arquitetura** — tudo está nos ADRs. Consulte o ADR relevante antes de questionar
 2. **Pergunte antes de implementar** se algo não estiver claro nos docs
-3. **Não instale bibliotecas sem confirmar** — use `uv add <pacote>` no backend, `npm install <pacote>` no frontend
+3. **Não instale bibliotecas sem confirmar** — `uv add <pacote>` no backend, `npm install <pacote>` no frontend
 4. **Carregue apenas os arquivos da tarefa atual** — não leia toda a documentação de uma vez
-5. **Documentação sempre atualizada** — Antes de QUALQUER alteração no codebase:
-   - Consulte a documentação relevante (`docs/`, `TECH SPEC`, `orchestrator-scope-discovery.md`, `archi-prompts/Inventory.md`, etc.)
-   - Verifique se a mudança conflita com as regras, decisões (ADRs) ou especificações definidas
-   - Identifique riscos: quebra de sistema, impacto em outros componentes, violação de contrato entre agentes, inconsistências
-   - Se há risco significativo, **pergunte ao usuário** se deve continuar
-   - Se continuar: **atualize todos os documentos afetados** (TECH SPEC, ADRs, specs de prompts, Inventory, schemas, endpoints, etc.)
+5. **Documentação sempre atualizada** — antes de QUALQUER alteração no codebase:
+   - Consulte a documentação relevante (`docs/reference/`, `docs/adr/`, `archi-prompts/README.md`)
+   - Verifique se a mudança conflita com as regras, ADRs ou especificações
+   - Identifique riscos: quebra de sistema, impacto em outros componentes, violação de contrato entre agentes
+   - Se há risco significativo, **pergunte ao usuário** antes de continuar
+   - Se continuar: **atualize todos os documentos afetados** no mesmo commit
    - Se interromper: a mudança não é feita, o documento permanece correto como source of truth
 
 ## Skills instaladas

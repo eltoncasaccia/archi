@@ -24,21 +24,23 @@ Archi é um sistema web que automatiza a geração de propostas comerciais de so
 
 ---
 
-## 2. Repositórios
+## 2. Módulos
 
-| Repositório | Conteúdo |
+O projeto é um **monorepo**: os três módulos vivem no mesmo repositório git (`archi`), não em repositórios separados.
+
+| Módulo | Conteúdo |
 |---|---|
 | `archi-api` | Backend FastAPI (Python) |
 | `archi-web` | Frontend Next.js (TypeScript) |
-| `archi-prompts` | Prompts dos agentes (YAML) — repositório separado |
-
-Os três repositórios ficam em uma pasta raiz local durante o desenvolvimento:
+| `archi-prompts` | Prompts dos agentes (YAML) |
 
 ```
-~/projects/
+archi/
 ├── archi-api/
 ├── archi-web/
-└── archi-prompts/
+├── archi-prompts/
+├── docs/
+└── scripts/          ← scripts operacionais compartilhados
 ```
 
 ---
@@ -91,12 +93,12 @@ archi-api/
 ├── .env.example                   ← Todas as variáveis necessárias (sem valores reais)
 ├── .env                           ← Valores reais (não versionar)
 ├── Dockerfile
-└── scripts/
-    ├── setup.sh                   ← Inicialização do projeto
-    ├── db_setup.sql               ← Criação das tabelas no Supabase
-    ├── sync_prompts.sh            ← Push dos YAMLs do archi-prompts para o LangFuse
-    └── reset_session.sh           ← Reseta status de uma sessão (uso em dev)
+└── db/
+    └── schema.sql                 ← Criação das tabelas no Supabase
 ```
+
+> Os scripts operacionais (`setup.sh`, `dev.sh`, `sync_prompts.sh`, `reset_session.sh`)
+> ficam em `scripts/` na **raiz do repositório**, não dentro de `archi-api/`.
 
 ### archi-web (frontend)
 
@@ -702,7 +704,7 @@ cp archi-web/.env.example archi-web/.env.local
 ### Passo 2 — Criar tabelas no Supabase
 ```bash
 # Executar o script SQL no Supabase Dashboard → SQL Editor
-# Arquivo: db_setup.sql (raiz do projeto)
+# Arquivo: archi-api/db/schema.sql
 ```
 
 ### Passo 3 — Sincronizar prompts para o LangFuse cloud
@@ -718,7 +720,7 @@ cp archi-web/.env.example archi-web/.env.local
 
 ### Passo 4 — Subir com Docker Compose
 ```bash
-cd ~/projects/PRE-SALES
+cd ~/projects/archi
 make dev-build
 ```
 

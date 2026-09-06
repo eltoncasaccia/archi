@@ -1,3 +1,8 @@
+> ⚠️ **Documento histórico — arquivado.**
+> Registro das tarefas de implementação, já concluídas.
+> Os caminhos de arquivo citados aqui referem-se ao layout anterior à reorganização
+> (`docs/` plano, `scripts/db_setup.sql`). Estrutura atual: veja o [README](../../README.md).
+
 # TASKS.md — Archi
 ## Histórico de Implementação
 

@@ -1,3 +1,8 @@
+> ⚠️ **Documento histórico — arquivado.**
+> Escrito para um LangFuse self-hosted em `localhost:3001` que não existe mais — hoje o LangFuse é cloud. Mantido como referência dos fluxos de teste.
+> Os caminhos de arquivo citados aqui referem-se ao layout anterior à reorganização
+> (`docs/` plano, `scripts/db_setup.sql`). Estrutura atual: veja o [README](../../README.md).
+
 # TESTING_GUIDE.md — Archi
 ## Como testar cada tarefa
 

@@ -69,7 +69,7 @@ Documentação Swagger em `http://localhost:8000/docs`
 bash scripts/setup.sh
 
 # Criar tabelas no Supabase
-# Execute scripts/db_setup.sql no Supabase Dashboard → SQL Editor
+# Execute archi-api/db/schema.sql no Supabase Dashboard → SQL Editor
 
 # Sincronizar prompts para o LangFuse
 bash scripts/sync_prompts.sh
