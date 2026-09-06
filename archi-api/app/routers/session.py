@@ -168,7 +168,14 @@ async def send_message(session_id: str, body: SendMessageRequest):
         "content": body.content,
     }).execute()
 
-    system_prompt = get_prompt("agent-discovery-interview")
+    # O prompt declara {contexto_inicial} para receber o que já se sabe do cliente
+    # antes da conversa. Não há origem para isso hoje — access_codes não guarda
+    # contexto — mas a variável precisa ser preenchida: sem isso o modelo lê o
+    # próprio placeholder sob o título "Contexto disponível antes da conversa".
+    system_prompt = get_prompt(
+        "agent-discovery-interview",
+        contexto_inicial="Nenhum contexto prévio sobre este cliente. Conduza a entrevista do zero.",
+    )
     llm_messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": body.content}]
 
     return StreamingResponse(
@@ -230,17 +237,24 @@ async def _stream_response(session_id: str, llm_messages: list, session: dict):
             model=settings.litellm_model,
             messages=llm_messages,
             stream=True,
+            # Sem isto nenhum chunk carrega usage: input_tokens ficava sempre em 0,
+            # o teto de max_input_tokens_per_session nunca disparava e o LangFuse
+            # registrava custo zero na entrevista.
+            stream_options={"include_usage": True},
         )
 
         async for chunk in response:
-            delta = chunk.choices[0].delta.content or ""
-            if delta:
-                full_response += delta
-                yield f"data: {json.dumps({'delta': delta})}\n\n"
+            # O chunk final de usage vem sem choices em vários providers.
+            if chunk.choices:
+                delta = chunk.choices[0].delta.content or ""
+                if delta:
+                    full_response += delta
+                    yield f"data: {json.dumps({'delta': delta})}\n\n"
 
-            if hasattr(chunk, "usage") and chunk.usage:
-                input_tokens_used = chunk.usage.prompt_tokens or 0
-                output_tokens_used = chunk.usage.completion_tokens or 0
+            usage = getattr(chunk, "usage", None)
+            if usage:
+                input_tokens_used = usage.prompt_tokens or 0
+                output_tokens_used = usage.completion_tokens or 0
 
     except Exception as e:
         logger.error("LLM call failed: %s: %s", type(e).__name__, e)

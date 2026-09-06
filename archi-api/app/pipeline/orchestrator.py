@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import re
 import time
@@ -41,12 +42,22 @@ class PipelineStepError(Exception):
         super().__init__(f"[{step}] {message}")
 
 
+# Cada prompt do pipeline traz uma seção "## Entradas recebidas do pipeline" com um
+# slot por variável. O conteúdo vai nesses slots, via get_prompt(**vars) — não numa
+# mensagem de usuário paralela, que faria o modelo receber o mesmo dado duas vezes:
+# uma vez como placeholder literal e outra como texto solto.
+_RUN_DIRECTIVE = (
+    "Execute sua tarefa seguindo o protocolo definido acima, "
+    "usando as entradas já fornecidas na seção de entradas."
+)
+
+
 @observe(as_type="generation")
-async def _run_step(step_name: str, prompt_name: str, user_input: str, session_id: str) -> str:
+async def _run_step(step_name: str, prompt_name: str, session_id: str, **prompt_vars: str) -> str:
     """Calls LiteLLM for one pipeline step. Retries once on failure."""
     messages = [
-        {"role": "system", "content": get_prompt(prompt_name)},
-        {"role": "user", "content": user_input},
+        {"role": "system", "content": get_prompt(prompt_name, **prompt_vars)},
+        {"role": "user", "content": _RUN_DIRECTIVE},
     ]
 
     lf = get_client()
@@ -123,8 +134,12 @@ async def run_pipeline(session_id: str, supabase) -> None:
         discovery_summary = await _run_step(
             "agent-discovery-generator",
             "agent-discovery-generator",
-            discovery_approved,
             session_id,
+            discovery_aprovado=discovery_approved,
+            # Documentos enviados na entrevista já entram na conversa e chegam aqui
+            # dentro do próprio bloco aprovado — não há anexo separado nesta etapa.
+            documentos_opcionais="Nenhum documento anexado separadamente.",
+            preocupacoes_especificas="Nenhuma.",
         )
         logger.info(f"[{session_id}] ✓ Etapa 1/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -135,14 +150,13 @@ async def run_pipeline(session_id: str, supabase) -> None:
         # --- Etapa 2: agent-pricing ---
         t = time.monotonic()
         logger.info(f"[{session_id}] ▶ Etapa 2/4: pricing")
-        from app.config import settings
         params_comerciais = settings.get_parametros_comerciais()
-        pricing_input = f"**Discovery Summary:**\n{discovery_summary}\n\n**Parâmetros Comerciais:**\n{params_comerciais}"
         pricing_summary = await _run_step(
             "agent-pricing",
             "agent-pricing",
-            pricing_input,
             session_id,
+            discovery_summary=discovery_summary,
+            parametros_comerciais=json.dumps(params_comerciais, ensure_ascii=False, indent=2),
         )
         logger.info(f"[{session_id}] ✓ Etapa 2/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -153,12 +167,12 @@ async def run_pipeline(session_id: str, supabase) -> None:
         # --- Etapa 3: agent-phases ---
         t = time.monotonic()
         logger.info(f"[{session_id}] ▶ Etapa 3/4: phases")
-        phases_input = f"{discovery_summary}\n\n{pricing_summary}"
         phases_plan = await _run_step(
             "agent-phases",
             "agent-phases",
-            phases_input,
             session_id,
+            discovery_summary=discovery_summary,
+            pricing_summary=pricing_summary,
         )
         logger.info(f"[{session_id}] ✓ Etapa 3/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -175,18 +189,15 @@ async def run_pipeline(session_id: str, supabase) -> None:
             f"Telefone: {settings.company_phone or '—'}\n"
             f"Site: {settings.company_website or '—'}"
         )
-        proposal_input = (
-            f"{discovery_approved}\n\n"
-            f"{discovery_summary}\n\n"
-            f"{pricing_summary}\n\n"
-            f"{phases_plan}\n\n"
-            f"[DADOS_EMPRESA_VENDEDORA]\n{dados_empresa}\n[/DADOS_EMPRESA_VENDEDORA]"
-        )
         proposal_metadata = await _run_step(
             "agent-proposal-generator",
             "agent-proposal-generator",
-            proposal_input,
             session_id,
+            discovery_aprovado=discovery_approved,
+            discovery_summary=discovery_summary,
+            pricing_summary=pricing_summary,
+            phases_plan=phases_plan,
+            dados_empresa_vendedora=dados_empresa,
         )
         logger.info(f"[{session_id}] ✓ Etapa 4/4 concluída em {_elapsed(t)}")
         await update_session({
@@ -213,10 +224,25 @@ async def run_pipeline(session_id: str, supabase) -> None:
         proposal_id = proposal_result.data[0]["id"]
 
         await update_session({"status": "pending_review"})
-        await notify(
-            "pipeline_completed",
-            f"Proposta pronta para revisão. ID: {proposal_id}",
-        )
+
+        # total_price sai de uma regex sobre texto livre do agent-pricing. Quando o
+        # formato varia, a extração devolve None e a proposta nasce sem preço — sem
+        # isso aqui, o admin só descobriria ao abrir o documento gerado.
+        if total_price is None:
+            logger.warning(
+                "[%s] preço não extraído do [PRICING_SUMMARY] — proposta %s criada sem total_price",
+                session_id, proposal_id,
+            )
+            await notify(
+                "pipeline_completed",
+                f"Proposta pronta para revisão, mas o preço não pôde ser lido "
+                f"automaticamente — preencha antes de enviar. ID: {proposal_id}",
+            )
+        else:
+            await notify(
+                "pipeline_completed",
+                f"Proposta pronta para revisão. ID: {proposal_id}",
+            )
         lf.update_current_trace(output={"proposal_id": proposal_id})
         logger.info(f"[{session_id}] ✅ Pipeline concluído em {_elapsed(pipeline_start)}. Proposta: {proposal_id}")
 
