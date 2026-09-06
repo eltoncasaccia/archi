@@ -41,7 +41,7 @@ Banco, storage e autenticação do admin.
    - **SQL Editor → New query**
    - Cole o conteúdo de `archi-api/db/schema.sql` e clique em **Run**
    - Cria as 5 tabelas (`access_codes`, `sessions`, `messages`, `proposals`,
-     `notifications`), 8 índices, e liga RLS com 4 policies para o papel `authenticated`
+     `notifications`), 9 índices, e liga RLS com 4 policies para o papel `authenticated`
 
    > `archi-api/db/schema.sql` é o source of truth do schema. Ao alterar o banco,
    > atualize esse arquivo no mesmo commit.

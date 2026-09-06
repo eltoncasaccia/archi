@@ -71,9 +71,17 @@ async def patch_proposal(
     updates = body.model_dump(exclude_none=True)
     if not updates:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar.")
+
     # Supabase/httpx cannot serialize Decimal — convert to float
-    if "total_price" in updates:
-        updates["total_price"] = float(updates["total_price"])
+    for money_field in ("total_price", "closed_value"):
+        if money_field in updates:
+            updates[money_field] = float(updates[money_field])
+
+    if "outcome" in updates:
+        updates["outcome"] = updates["outcome"].value
+        # Carimba quando o desfecho foi registrado. Sem isto não dá para medir
+        # ciclo de venda nem separar histórico recente de antigo ao sugerir preço.
+        updates["outcome_at"] = datetime.now(timezone.utc).isoformat()
 
     result = await sb.table("proposals").update(updates).eq("id", proposal_id).execute()
     if not result.data:

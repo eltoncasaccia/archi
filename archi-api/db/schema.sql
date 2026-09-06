@@ -31,6 +31,15 @@ CREATE TYPE proposal_status AS ENUM (
   'rejected'          -- admin rejected (do not send)
 );
 
+-- Desfecho comercial, depois do envio. Não confundir com proposal_status:
+-- aquele é o fluxo interno até enviar; este é o que o cliente respondeu.
+CREATE TYPE proposal_outcome AS ENUM (
+  'pending',          -- enviada, sem resposta ainda
+  'negotiating',      -- cliente respondeu, em negociação
+  'won',              -- fechou
+  'lost'              -- perdeu
+);
+
 CREATE TYPE notification_type AS ENUM (
   'pipeline_completed',   -- proposal ready for review
   'pipeline_error',       -- pipeline failure
@@ -102,28 +111,52 @@ ADD CONSTRAINT fk_access_codes_session FOREIGN KEY (session_id) REFERENCES sessi
 
 -- proposals
 CREATE TABLE proposals (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id     UUID REFERENCES sessions(id) NOT NULL,
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id    UUID REFERENCES sessions(id) NOT NULL,
 
--- Generated files (Supabase Storage URLs)
-docx_url TEXT, pdf_url TEXT,
+  -- Generated files (Supabase Storage URLs)
+  docx_url      TEXT,
+  pdf_url       TEXT,
 
--- Admin-editable fields before generating documents
-total_price NUMERIC(12, 2),
-total_days INTEGER,
-validity_days INTEGER DEFAULT 30,
-admin_notes TEXT,
+  -- Admin-editable fields before generating documents.
+  -- O pipeline preenche uma sugestão; quem decide o número final é o analista.
+  total_price   NUMERIC(12, 2),
+  total_days    INTEGER,
+  validity_days INTEGER DEFAULT 30,
+  admin_notes   TEXT,
+  analyst_name  TEXT,
 
--- Status and delivery
-status proposal_status NOT NULL DEFAULT 'pending_review',
-sent_at TIMESTAMPTZ,
+  -- Status and delivery
+  status        proposal_status NOT NULL DEFAULT 'pending_review',
+  sent_at       TIMESTAMPTZ,
 
--- Client data (copied from session to avoid JOIN)
-client_name    TEXT,
-  client_email   TEXT,
+  -- Client data (copied from session to avoid JOIN)
+  client_name   TEXT,
+  client_email  TEXT,
 
-  created_at     TIMESTAMPTZ DEFAULT NOW(),
-  updated_at     TIMESTAMPTZ DEFAULT NOW()
+  -- ---------------------------------------------------------------------------
+  -- Desfecho comercial — o que aconteceu DEPOIS de enviar.
+  --
+  -- `status` acompanha o fluxo interno (revisar, aprovar, enviar) e para aí.
+  -- Estes campos registram o resultado, e são a única fonte de verdade capaz de
+  -- calibrar preço e prazo: sem eles a estimativa do agente nunca melhora, por
+  -- mais propostas que o sistema gere.
+  --
+  -- actual_hours é o mais valioso: é o que revela o fator real de aceleração por
+  -- tipo de módulo, em vez de supô-lo.
+  -- ---------------------------------------------------------------------------
+  outcome       proposal_outcome NOT NULL DEFAULT 'pending',
+  closed_value  NUMERIC(12, 2),   -- quanto o cliente de fato pagou
+  actual_hours  INTEGER,          -- quanto custou entregar
+  outcome_notes TEXT,             -- por que perdeu, o que foi negociado
+  outcome_at    TIMESTAMPTZ,      -- quando o desfecho foi registrado
+
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Valor fechado só faz sentido quando ganhou.
+  CONSTRAINT closed_value_requires_won
+    CHECK (closed_value IS NULL OR outcome = 'won')
 );
 
 -- notifications
@@ -167,6 +200,11 @@ CREATE INDEX idx_sessions_access_code ON sessions (access_code);
 CREATE INDEX idx_proposals_session_id ON proposals (session_id);
 
 CREATE INDEX idx_proposals_status ON proposals (status);
+
+-- A consulta que sustenta a sugestão de preço por histórico: propostas ganhas,
+-- com valor e horas registrados. Parcial porque só essas linhas interessam.
+CREATE INDEX idx_proposals_outcome_won ON proposals (outcome, closed_value)
+  WHERE outcome = 'won' AND closed_value IS NOT NULL;
 
 CREATE INDEX idx_notifications_read ON notifications (read);
 

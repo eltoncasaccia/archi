@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -31,6 +31,17 @@ class ProposalStatus(str, Enum):
     approved       = "approved"
     sent           = "sent"
     rejected       = "rejected"
+
+
+class ProposalOutcome(str, Enum):
+    """Desfecho comercial — o que o cliente respondeu depois do envio.
+
+    Não confundir com ProposalStatus, que é o fluxo interno até enviar.
+    """
+    pending     = "pending"
+    negotiating = "negotiating"
+    won         = "won"
+    lost        = "lost"
 
 class NotificationType(str, Enum):
     pipeline_completed = "pipeline_completed"
@@ -97,7 +108,13 @@ class ProposalDetail(ProposalListItem):
     docx_url: Optional[str] = None
     pdf_url: Optional[str] = None
     admin_notes: Optional[str] = None
+    analyst_name: Optional[str] = None
     sent_at: Optional[datetime] = None
+    outcome: ProposalOutcome = ProposalOutcome.pending
+    closed_value: Optional[Decimal] = None
+    actual_hours: Optional[int] = None
+    outcome_notes: Optional[str] = None
+    outcome_at: Optional[datetime] = None
     discovery_summary: Optional[str] = None
     pricing_summary: Optional[str] = None
     phases_plan: Optional[str] = None
@@ -112,6 +129,21 @@ class UpdateProposalRequest(BaseModel):
     client_name:   Optional[str]     = None
     client_email:  Optional[str]     = None
     analyst_name:  Optional[str]     = None
+
+    # Desfecho comercial. closed_value só é aceito junto de outcome='won' —
+    # ver o CHECK equivalente em db/schema.sql.
+    outcome:       Optional[ProposalOutcome] = None
+    closed_value:  Optional[Decimal] = Field(None, gt=0)
+    actual_hours:  Optional[int]     = Field(None, gt=0)
+    outcome_notes: Optional[str]     = None
+
+    @model_validator(mode="after")
+    def _closed_value_requires_won(self):
+        if self.closed_value is not None and self.outcome != ProposalOutcome.won:
+            raise ValueError(
+                "closed_value só pode ser informado junto de outcome='won'."
+            )
+        return self
 
 class GenerateDocsRequest(BaseModel):
     client_name:  Optional[str]   = None
