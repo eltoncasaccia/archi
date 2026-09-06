@@ -39,12 +39,19 @@ make setup
 # 3. Criar as tabelas no Supabase
 #    Dashboard → SQL Editor → executar archi-api/db/schema.sql
 
-# 4. Subir tudo
-make dev-build
-
-# 5. Publicar os prompts no LangFuse
+# 4. Publicar os prompts no LangFuse
 make sync-prompts
+
+# 5. Conferir se está tudo de pé antes de subir
+make doctor
+
+# 6. Subir tudo
+make dev-build
 ```
+
+`make doctor` testa o ambiente de verdade — Supabase (tabelas e bucket), LangFuse
+(chaves e prompts publicados), provider LLM, Resend e as ferramentas locais — e diz
+o que falta. É o primeiro comando a rodar quando algo não sobe.
 
 Serviços após o start:
 
@@ -62,6 +69,7 @@ Serviços após o start:
 | `make dev` | `scripts/dev.sh` | Sobe os serviços via Docker Compose |
 | `make dev-build` | `scripts/dev.sh --build` | Sobe com rebuild das imagens |
 | `make setup` | `scripts/setup.sh` | Inicializa o projeto (deps, `.env`) |
+| `make doctor` | `scripts/doctor.sh` | Verifica se o ambiente está pronto para rodar |
 | `make sync-prompts` | `scripts/sync_prompts.sh` | Envia os prompts para o LangFuse cloud |
 | `make reset-session` | `scripts/reset_session.sh` | Reseta o status de uma sessão (dev) |
 

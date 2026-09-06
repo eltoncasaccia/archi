@@ -28,6 +28,19 @@ archi/
 └── Makefile
 ```
 
+## Antes de investigar qualquer erro de ambiente
+
+```bash
+make doctor
+```
+
+Verifica ferramentas, as variáveis dos dois `.env`, Supabase (tabelas e bucket), LangFuse
+(chaves e os 5 prompts publicados), provider LLM e Resend. É somente-leitura e sai com
+código 1 se algo faltar. **Rode isto antes de depurar "a API não sobe" ou "o pipeline
+falhou"** — na maioria das vezes a resposta está aí, e sai em segundos.
+
+Como resolver o que ele apontar: `docs/setup/prerequisites.md`.
+
 ## ⚠️ Execute comandos dentro do container
 
 **Sempre rode comandos no container — nunca no host.

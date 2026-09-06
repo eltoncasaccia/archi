@@ -1,11 +1,12 @@
-# PREREQUISITES.md — Archi
-## Pré-requisitos antes de começar a implementação
+# Preparar o ambiente — Archi
 
-**Versão:** 1.0.0
-**Última atualização:** 2026
+Tudo que o sistema precisa para rodar: contas externas, chaves e ferramentas locais.
+Serve tanto para montar o ambiente do zero quanto para reconstruí-lo depois.
 
-> Complete todos os itens abaixo antes de iniciar qualquer tarefa com o Claude Code.
-> Cada item indica em qual tarefa do TASKS.md será utilizado.
+> **Antes de seguir o passo a passo, rode `make doctor`.** Ele testa de verdade cada
+> item deste documento — conexão com o Supabase, tabelas, bucket, chaves do LangFuse,
+> prompts publicados, provider LLM e Resend — e diz exatamente o que falta.
+> Este documento explica *como resolver* o que o doctor apontar.
 
 ---
 
@@ -14,7 +15,7 @@
 ---
 
 ### 1.1 Supabase
-**Usado em:** TASK-003, TASK-005
+Banco, storage e autenticação do admin.
 
 1. Crie conta em https://supabase.com
 2. Clique em **New Project**
@@ -36,21 +37,36 @@
 >
 > ⚠️ A Secret key dá acesso total ao banco. Nunca use no frontend.
 
-6. Crie o bucket de storage:
+6. **Crie as tabelas:**
+   - **SQL Editor → New query**
+   - Cole o conteúdo de `archi-api/db/schema.sql` e clique em **Run**
+   - Cria as 5 tabelas (`access_codes`, `sessions`, `messages`, `proposals`,
+     `notifications`), 8 índices, e liga RLS com 4 policies para o papel `authenticated`
+
+   > `archi-api/db/schema.sql` é o source of truth do schema. Ao alterar o banco,
+   > atualize esse arquivo no mesmo commit.
+
+7. Crie o bucket de storage:
    - **Storage → New bucket**
-   - Nome: `proposals`
+   - Nome: exatamente `proposals`
    - Marcar como **Public**
    - Clicar em **Create bucket**
 
-7. Crie o usuário admin:
-   - **Authentication → Users → Add user**
-   - Email: seu email
-   - Password: senha segura
+   > O `schema.sql` **não** cria o bucket — a linha está comentada no fim do arquivo.
+   > O nome está fixo em `archi-api/app/services/document_service.py:14`; se divergir,
+   > a proposta é gerada mas o upload falha.
+
+8. Crie o usuário admin:
+   - **Authentication → Users → Add user → Create new user**
+   - Email e senha, e marque **Auto Confirm User**
+
+   > Sem esse usuário não há como entrar no painel. O login chama `signInWithPassword`
+   > direto — não existe tela de cadastro nem fluxo de convite, então o usuário só nasce aqui.
 
 ---
 
 ### 1.2 Provider LLM — OpenRouter
-**Usado em:** toda chamada LLM do sistema
+Usado em toda chamada LLM do sistema.
 
 O sistema usa OpenRouter como provider LLM. Troque apenas `LITELLM_MODEL` para mudar de modelo sem alterar código.
 
@@ -67,18 +83,25 @@ Troque de modelo mudando apenas `LITELLM_MODEL` — sem criar conta em cada prov
 3. Vá em **Credits → Add credits** (mínimo $5 — existem modelos gratuitos também)
 4. Vá em **Keys → Create Key** → anote a chave → vai para `LLM_API_KEY`
 
-Modelos recomendados por fase:
+Modelos recomendados por fase — slugs e preços conferidos no catálogo do OpenRouter
+em 6 de setembro de 2026 (`GET /api/v1/models`):
 
-| Fase | `LITELLM_MODEL` | Modelo | Custo aprox. |
-|---|---|---|---|
-| Desenvolvimento | `openrouter/deepseek/deepseek-v3` | DeepSeek V3 | ~$0.28/M tokens |
-| Desenvolvimento | `openrouter/meta-llama/llama-4-maverick` | Llama 4 Maverick | ~$0.20/M tokens |
-| Validação de prompts | `openrouter/anthropic/claude-sonnet-4-5` | Claude Sonnet | ~$3/M tokens |
-| Produção | `openrouter/anthropic/claude-sonnet-4-5` | Claude Sonnet | ~$3/M tokens |
+| Fase | `LITELLM_MODEL` | Custo (entrada / saída por M tokens) |
+|---|---|---|
+| Desenvolvimento | `openrouter/openai/gpt-4o-mini` | $0.15 / $0.60 |
+| Desenvolvimento | `openrouter/meta-llama/llama-4-maverick` | $0.20 / — |
+| Desenvolvimento | `openrouter/deepseek/deepseek-chat-v3.1` | $0.55 / — |
+| Validação de prompts | `openrouter/anthropic/claude-sonnet-5` | $2.00 / $10.00 |
+| Produção | `openrouter/anthropic/claude-sonnet-5` | $2.00 / $10.00 |
+| Produção (raciocínio pesado) | `openrouter/anthropic/claude-opus-5` | $5.00 / $25.00 |
 
-> 💡 Comece com DeepSeek V3 para desenvolvimento — qualidade excelente e custo baixo.
-> Troque para Claude Sonnet quando for validar os prompts finais e em produção.
-> Tudo com a mesma `LLM_API_KEY`, só mudando `LITELLM_MODEL`.
+> 💡 Comece barato no desenvolvimento e troque para Claude Sonnet 5 ao validar os prompts
+> finais. Tudo com a mesma `LLM_API_KEY` — só muda `LITELLM_MODEL`, sem tocar em código
+> (é o motivo do LiteLLM: ver `docs/adr/adr-002-litellm.md`).
+>
+> ⚠️ Os slugs do OpenRouter mudam quando modelos são lançados ou aposentados. Se uma
+> chamada falhar com "model not found", confira a lista atual em
+> https://openrouter.ai/models.
 
 ---
 
@@ -106,7 +129,7 @@ Modelos disponíveis no free tier:
 
 1. Acesse https://console.anthropic.com
 2. Vá em **API Keys → Create Key** → anote a chave → vai para `LLM_API_KEY`
-3. `LITELLM_MODEL=anthropic/claude-sonnet-4-5`
+3. `LITELLM_MODEL=anthropic/claude-sonnet-5`
 
 > ⚠️ A chave só aparece uma vez — anote imediatamente.
 > ⚠️ Cobrado separadamente do plano Claude.ai Pro.
@@ -114,7 +137,7 @@ Modelos disponíveis no free tier:
 ---
 
 ### 1.3 Resend
-**Usado em:** TASK-015
+Envio da proposta pronta por email.
 
 1. Crie conta em https://resend.com
 2. Vá em **API Keys → Create API Key**
@@ -122,10 +145,14 @@ Modelos disponíveis no free tier:
 4. Anote a chave → vai para `RESEND_API_KEY`
 5. Sem domínio próprio: use `EMAIL_FROM=onboarding@resend.dev` para desenvolvimento
 
+> ⚠️ `onboarding@resend.dev` é o sandbox do Resend: ele **só entrega para o email dono
+> da conta**. Serve para testar o fluxo inteiro, mas não manda nada para um cliente real.
+> Para isso, verifique um domínio em **Domains** e troque `EMAIL_FROM`.
+
 ---
 
 ### 1.4 LangFuse (cloud)
-**Usado em:** todo tracing LLM e gerenciamento de prompts
+Gerenciamento dos prompts e tracing de toda chamada LLM.
 
 O LangFuse roda na nuvem. Não há container local.
 
@@ -142,6 +169,19 @@ O LangFuse roda na nuvem. Não há container local.
 
 `LANGFUSE_HOST` deve ser `https://us.cloud.langfuse.com` no `.env`.
 
+6. **Publique os prompts** — depois de preencher `archi-api/.env`:
+
+```bash
+make sync-prompts
+```
+
+> ⚠️ Passo obrigatório num projeto LangFuse novo. Os YAMLs em `archi-prompts/` **não são
+> lidos em runtime**: na subida, a API busca os 5 prompts no LangFuse **pelo nome**. Se
+> não estiverem publicados e não houver `archi-api/prompts_cache.json`, a API não sobe —
+> `prompt_loader.py` levanta `RuntimeError`.
+>
+> Detalhes do fluxo: `archi-prompts/README.md`.
+
 ---
 
 ## 2. Ferramentas locais
@@ -149,7 +189,7 @@ O LangFuse roda na nuvem. Não há container local.
 ---
 
 ### 2.1 Docker Desktop ou OrbStack
-**Usado em:** TASK-004
+Necessário para `make dev`.
 
 Escolha um — são totalmente compatíveis com Docker Compose, comandos idênticos:
 
@@ -161,7 +201,7 @@ Verifique que está rodando antes de executar `make dev`.
 ---
 
 ### 2.2 Python 3.12+ com uv
-**Usado em:** TASK-001
+Gerenciador de pacotes do backend.
 
 O projeto usa **uv** como gerenciador de pacotes e ambientes Python — sem pip, sem requirements.txt.
 **Documentação:** https://docs.astral.sh/uv/
@@ -201,7 +241,7 @@ uv python install 3.12   # se 3.12 não estiver listado
 ---
 
 ### 2.3 Node.js 18+
-**Usado em:** TASK-002
+Necessário para o frontend.
 
 ```bash
 node --version   # deve ser 18 ou superior
@@ -212,7 +252,7 @@ Se precisar instalar: https://nodejs.org (versão LTS)
 ---
 
 ### 2.4 Claude Code
-**Usado em:** todas as tarefas
+Para trabalhar no código com assistência.
 
 ```bash
 claude --version
@@ -225,23 +265,31 @@ npm install -g @anthropic-ai/claude-code
 
 ---
 
-## 3. Checklist final antes de começar
+## 3. Verificar se está tudo pronto
 
-- [ ] Projeto criado no Supabase com região São Paulo
-- [ ] `SUPABASE_URL` anotada (Settings → General)
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` anotada (Publishable key)
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` anotada (Secret key)
-- [ ] Bucket `proposals` criado no Supabase Storage
-- [ ] Usuário admin criado no Supabase Authentication
-- [ ] Conta criada no OpenRouter, créditos adicionados e `LLM_API_KEY` anotada
-- [ ] Conta criada no Resend e `RESEND_API_KEY` anotada
-- [ ] Docker Desktop ou OrbStack instalado e rodando
-- [ ] uv instalado (`uv --version` funciona)
-- [ ] Python 3.12 disponível via uv (`uv python list`)
-- [ ] Node.js 18+ instalado
-- [ ] Claude Code instalado (`claude --version` funciona)
+```bash
+make doctor
+```
 
-> As chaves do LangFuse são obtidas ao criar o projeto no LangFuse cloud (https://us.cloud.langfuse.com).
+Não existe checklist manual aqui de propósito: uma lista de caixinhas registra o que você
+*lembra* de ter feito, e foi assim que este projeto passou meses com um Supabase deletado
+sem ninguém notar. O `doctor` **testa**, e sai com código 1 se algo estiver faltando.
+
+O que ele verifica:
+
+| Área | Checagem |
+|---|---|
+| Ferramentas | `docker` (com daemon rodando), `uv`, `node` 18+, `python3` |
+| Ambiente | as 11 variáveis de `archi-api/.env` e as 3 de `archi-web/.env.local` |
+| Ambiente | se as duas URLs do Supabase apontam para o mesmo projeto |
+| Ambiente | se a chave secreta vazou para uma variável `NEXT_PUBLIC_` |
+| Supabase | DNS resolve, as 5 tabelas respondem, o bucket `proposals` existe |
+| LangFuse | chaves aceitas e os 5 prompts publicados |
+| LLM | chave do OpenRouter (ou Groq) aceita |
+| Resend | chave aceita, e aviso se `EMAIL_FROM` ainda é o sandbox |
+
+Ele é somente-leitura: não escreve nada, não envia email e nunca imprime o valor de
+uma chave — só se ela foi aceita.
 
 ---
 
@@ -250,5 +298,5 @@ npm install -g @anthropic-ai/claude-code
 Não anote as chaves em documentos versionados no Git.
 Use um gerenciador de senhas (1Password, Bitwarden) ou arquivo local fora do repositório.
 
-As chaves serão colocadas nos arquivos `.env` criados na TASK-003.
-Esses arquivos estão no `.gitignore` e nunca serão enviados ao GitHub.
+As chaves vão para `archi-api/.env` e `archi-web/.env.local`, criados por `make setup` a
+partir dos `.env.example`. Os dois estão no `.gitignore` e nunca vão para o GitHub.
