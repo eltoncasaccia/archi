@@ -91,6 +91,29 @@ Os prompts YAML em `archi-prompts/` **não são lidos em runtime**. O fluxo é:
 Os nomes dos 5 prompts estão fixos em `PROMPT_NAMES` (`prompt_loader.py`) e nas chamadas
 de `scripts/sync_prompts.sh`. **Renomear uma pasta de agente exige atualizar os dois.**
 
+### Variáveis de prompt
+
+Cada prompt declara variáveis `{snake_case}` numa seção "## Entradas recebidas do pipeline".
+Quem chama **tem que preenchê-las**: `get_prompt(nome, variavel=valor)`. Variável não
+preenchida chega literal ao modelo, que passa a ler a instrução com um placeholder no
+lugar do conteúdo — o log avisa quando isso acontece.
+
+Os `{{MAIÚSCULAS}}` de chave dupla são outra coisa: são placeholders do template do
+documento, preenchidos pelo `agent-proposal-generator`. Não os substitua no carregador.
+
+### Antes de publicar prompt
+
+```bash
+make eval
+```
+
+Checa os prompts contra os `prompt.tests.yaml` **sem chamar LLM** — montagem, variáveis
+preenchidas e asserções de conteúdo. Determinístico e instantâneo. O `make sync-prompts`
+roda isso sozinho e **aborta se falhar** (`--skip-eval` fura, deliberadamente).
+
+Falha na eval significa que prompt e teste divergiram. **Decida qual dos dois está certo**
+antes de mexer: já aconteceu de o teste afirmar o oposto do prompt.
+
 ## Regras
 
 1. **Não tome decisões de arquitetura** — tudo está nos ADRs. Consulte o ADR relevante antes de questionar

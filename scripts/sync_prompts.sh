@@ -48,6 +48,24 @@ if [ ! -d "$PROMPTS_DIR" ]; then
 fi
 
 # -----------------------------------------------------------------------------
+# Gate: a eval de montagem roda antes de publicar
+# Publicar é irreversível na prática — o LangFuse marca a versão como production
+# e a API passa a servi-la na próxima subida. A eval é determinística e leva
+# menos de um segundo, então não há motivo para publicar sem ela.
+# Use --skip-eval para publicar mesmo com falha (deliberadamente).
+# -----------------------------------------------------------------------------
+
+if [ "${1:-}" != "--skip-eval" ]; then
+  info "Rodando a eval dos prompts antes de publicar..."
+  if ! uv run --directory "$ROOT_DIR/archi-api" python "$ROOT_DIR/scripts/eval_prompts.py"; then
+    error "A eval falhou — nada foi publicado. Corrija, ou use: bash scripts/sync_prompts.sh --skip-eval"
+  fi
+  echo ""
+else
+  warning "Eval pulada por --skip-eval."
+fi
+
+# -----------------------------------------------------------------------------
 # Sync function — pushes one prompt to LangFuse via API
 # -----------------------------------------------------------------------------
 

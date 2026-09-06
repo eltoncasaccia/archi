@@ -60,12 +60,24 @@ def _fetch_from_langfuse() -> dict[str, str]:
     return prompts
 
 
-def get_prompt(name: str, **variables: str) -> str:
-    """Retorna o prompt, substituindo as variáveis {nome} declaradas nele.
+def render_prompt(text: str, **variables: str) -> tuple[str, list[str]]:
+    """Preenche as variáveis {nome} de um prompt. Devolve (texto, não_preenchidas).
 
     Substituição literal (str.replace), não str.format: os prompts contêm chaves
     duplas do template do documento — {{PRECO_TOTAL}}, {{NOME_CLIENTE}} — que o
     format quebraria.
+
+    Função pura, sem estado: é o que `scripts/eval_prompts.py` usa para checar os
+    YAMLs antes de publicar. Assim o eval exercita o mesmo código que a produção,
+    em vez de uma reimplementação que pode divergir.
+    """
+    for key, value in variables.items():
+        text = text.replace("{" + key + "}", value if value is not None else "")
+    return text, sorted(set(_UNFILLED_VAR_RE.findall(text)))
+
+
+def get_prompt(name: str, **variables: str) -> str:
+    """Retorna o prompt carregado, com as variáveis preenchidas.
 
     Variável declarada no prompt e não passada aqui chega literal ao modelo, que
     passa a ler a própria instrução com um placeholder no lugar do conteúdo.
@@ -74,14 +86,10 @@ def get_prompt(name: str, **variables: str) -> str:
     if name not in _prompts:
         raise KeyError(f"Prompt '{name}' não encontrado. Verifique o LangFuse.")
 
-    text = _prompts[name]
-    for key, value in variables.items():
-        text = text.replace("{" + key + "}", value if value is not None else "")
-
-    leftover = _UNFILLED_VAR_RE.findall(text)
+    text, leftover = render_prompt(_prompts[name], **variables)
     if leftover:
         logger.warning(
             "Prompt '%s' enviado com variáveis não preenchidas: %s",
-            name, ", ".join(sorted(set(leftover))),
+            name, ", ".join(leftover),
         )
     return text

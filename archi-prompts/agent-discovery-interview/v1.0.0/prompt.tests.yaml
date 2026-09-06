@@ -3,8 +3,8 @@ cases:
     inputs:
       contexto_inicial: "Cliente é uma ONG que trabalha com assistência social e precisa de um sistema para gerenciar atendimentos."
     expect_contains:
-      - "Você é um especialista em levantamento de requisitos"
-      - "conduzir a entrevista de discovery"
+      - "especialista em levantamento de requisitos"
+      - "entrevista consultiva"
       - "Cliente é uma ONG que trabalha com assistência social"
       - "Contexto disponível antes da conversa"
       - "O que você precisa descobrir"
@@ -15,9 +15,11 @@ cases:
     inputs:
       contexto_inicial: "Nenhum contexto fornecido previamente."
     expect_contains:
-      - "Você é um especialista em levantamento de requisitos"
+      - "especialista em levantamento de requisitos"
       - "Nenhum contexto fornecido previamente"
-      - "Faça no máximo 2 perguntas por mensagem"
+      # O teste afirmava "no máximo 2 perguntas" — o oposto do que o prompt manda.
+      # Quem rodasse o eval sem ler seria levado a "consertar" o prompt errado.
+      - "Faça exatamente 1 pergunta por mensagem"
       - "Não demonstre surpresa, julgamento ou opinião"
       - "empresa:"
       - "setor:"

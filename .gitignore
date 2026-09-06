@@ -15,6 +15,10 @@ repo-skills/
 .env.*.local
 !.env.example
 
+# ── Python (scripts fora do archi-api) ────────────────────────────────
+__pycache__/
+*.py[cod]
+
 # ── Logs ─────────────────────────────────────────────────────────────
 *.log
 logs/

@@ -40,8 +40,31 @@ archi-prompts/
 Cada `prompt.yaml` tem as chaves `_type`, `id`, `version`, `description`, `tags`,
 `input_variables` e `template`. O `sync_prompts.sh` publica o conteúdo de `template`.
 
-> Os `prompt.tests.yaml` existem e têm casos escritos, mas **não há runner automatizado**.
-> Hoje servem como especificação do comportamento esperado.
+## Eval
+
+```bash
+make eval
+```
+
+Roda os `prompt.tests.yaml` **sem chamar LLM**: determinístico, instantâneo, de graça.
+O `make sync-prompts` executa a eval antes de publicar e aborta se ela falhar.
+
+Cada caso tem `inputs` (os valores das variáveis) e `expect_contains` (strings que
+precisam aparecer no prompt montado). O runner checa três coisas:
+
+| Checagem | Regressão que pega |
+|---|---|
+| Toda variável declarada tem input | Call site esqueceu de passar uma entrada |
+| Todo input corresponde a uma variável | Prompt renomeou a variável, teste não acompanhou |
+| Nenhum placeholder sobrou no texto | O conteúdo não chegou ao modelo |
+| Todo `expect_contains` está presente | Prompt mudou e a asserção ficou obsoleta |
+
+O runner usa `render_prompt()` de `archi-api/app/services/prompt_loader.py` — o mesmo
+código da produção, não uma reimplementação que poderia divergir.
+
+**Isto é a camada 1: montagem.** Não julga a qualidade da saída — não diz se o preço
+faz sentido nem se a entrevista ficou boa. Isso é a camada 2, que exige chamar o modelo,
+discoveries reais e faixas de preço aceitáveis para julgar contra.
 
 ## Como os prompts chegam ao runtime
 
