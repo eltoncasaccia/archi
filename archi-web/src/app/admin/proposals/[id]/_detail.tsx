@@ -26,7 +26,23 @@ interface Proposal {
   sent_at: string | null
   created_at: string
   updated_at: string
+  // Desfecho comercial — o que o cliente respondeu depois do envio.
+  // Não confundir com `status`, que é o fluxo interno até enviar.
+  outcome: Outcome
+  closed_value: number | null
+  actual_hours: number | null
+  outcome_notes: string | null
+  outcome_at: string | null
 }
+
+type Outcome = 'pending' | 'negotiating' | 'won' | 'lost'
+
+const OUTCOME_OPTIONS: { value: Outcome; label: string; color: string }[] = [
+  { value: 'pending', label: 'Sem resposta', color: 'var(--muted-2)' },
+  { value: 'negotiating', label: 'Em negociação', color: 'var(--warn)' },
+  { value: 'won', label: 'Fechou', color: 'var(--ok)' },
+  { value: 'lost', label: 'Perdeu', color: 'var(--danger)' },
+]
 
 interface Session {
   id: string
@@ -496,6 +512,19 @@ export function ProposalDetail({ proposal: initialProposal, session, notificatio
   const [clientEmail, setClientEmail] = useState(proposal.client_email ?? '')
   const [analystName, setAnalystName] = useState(proposal.analyst_name ?? '')
 
+  // Desfecho fica fora do auto-save de propósito: registrar resultado é uma
+  // decisão, não rascunho. E o backend recusa closed_value sem outcome='won',
+  // então um save parcial no meio da digitação daria erro na cara do analista.
+  const [outcome, setOutcome] = useState<Outcome>(proposal.outcome ?? 'pending')
+  const [closedValue, setClosedValue] = useState(
+    proposal.closed_value != null
+      ? proposal.closed_value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : ''
+  )
+  const [actualHours, setActualHours] = useState(proposal.actual_hours != null ? String(proposal.actual_hours) : '')
+  const [outcomeNotes, setOutcomeNotes] = useState(proposal.outcome_notes ?? '')
+  const [savingOutcome, setSavingOutcome] = useState(false)
+
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const [generatingDocx, setGeneratingDocx] = useState(false)
@@ -550,6 +579,39 @@ export function ProposalDetail({ proposal: initialProposal, session, notificatio
       toast.error('Falha ao salvar. Tente novamente.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleSaveOutcome() {
+    if (savingOutcome) return
+    flushSync(() => { setSavingOutcome(true) })
+    try {
+      const token = await getToken()
+      const body: Record<string, unknown> = { outcome }
+
+      // O backend rejeita valor fechado sem outcome='won' (e o banco também,
+      // via CHECK). Só envia quando faz sentido.
+      if (outcome === 'won') {
+        const valueNum = brlToNumber(closedValue)
+        if (valueNum != null && valueNum > 0) body.closed_value = valueNum
+      }
+      const hoursNum = parseInt(actualHours, 10)
+      if (!isNaN(hoursNum) && hoursNum > 0) body.actual_hours = hoursNum
+      body.outcome_notes = outcomeNotes.trim() || null
+
+      const res = await fetch(`${API_URL}/admin/proposals/${proposal.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setProposal(data.proposal)
+      toast.success('Desfecho registrado.')
+    } catch {
+      toast.error('Falha ao registrar o desfecho. Tente novamente.')
+    } finally {
+      setSavingOutcome(false)
     }
   }
 
@@ -869,6 +931,109 @@ export function ProposalDetail({ proposal: initialProposal, session, notificatio
               </>
             )}
           </section>
+
+          {/* Aside — Desfecho comercial (só depois de enviada) */}
+          {isSent && (
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div>
+                <div className="eyebrow" style={{ marginBottom: 2 }}>resultado</div>
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 500 }}>Desfecho comercial</h3>
+              </div>
+              <div style={{ background: 'var(--paper)', border: '1px solid var(--rule)', padding: '14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                <div style={{ fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  O que o cliente respondeu. É daqui que sai a calibragem de preço e prazo
+                  das próximas estimativas.
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                  {OUTCOME_OPTIONS.map(opt => {
+                    const active = outcome === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => setOutcome(opt.value)}
+                        className="oa-btn ghost sm"
+                        style={{
+                          padding: '7px 4px', fontSize: 11.5, justifyContent: 'center',
+                          borderColor: active ? opt.color : 'var(--rule)',
+                          color: active ? opt.color : 'var(--muted)',
+                          background: active ? 'var(--paper-2)' : 'transparent',
+                          fontWeight: active ? 600 : 400,
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {outcome === 'won' && (
+                  <>
+                    <div>
+                      <div className="eyebrow" style={{ marginBottom: 4, fontSize: 9 }}>Valor fechado (R$)</div>
+                      <input
+                        className="oa-input" type="text" inputMode="numeric"
+                        value={closedValue}
+                        onChange={e => setClosedValue(parseBRLInput(e.target.value))}
+                        placeholder="0,00"
+                        style={{ fontSize: 13, padding: '5px 8px', fontFamily: 'var(--mono)', width: '100%' }}
+                      />
+                      <div style={{ fontSize: 10.5, color: 'var(--muted-2)', marginTop: 3 }}>
+                        Quanto o cliente de fato pagou — pode diferir do que foi proposto.
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="eyebrow" style={{ marginBottom: 4, fontSize: 9 }}>Horas reais de entrega</div>
+                      <input
+                        className="oa-input" type="number" min="0"
+                        value={actualHours}
+                        onChange={e => setActualHours(e.target.value)}
+                        placeholder="0"
+                        style={{ fontSize: 13, padding: '5px 8px', fontFamily: 'var(--mono)', width: '100%' }}
+                      />
+                      <div style={{ fontSize: 10.5, color: 'var(--muted-2)', marginTop: 3 }}>
+                        Preencha ao fim do projeto. É o que revela o ganho real de produtividade.
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {outcome !== 'pending' && (
+                  <div>
+                    <div className="eyebrow" style={{ marginBottom: 4, fontSize: 9 }}>
+                      {outcome === 'lost' ? 'Por que perdeu' : 'Observações'}
+                    </div>
+                    <textarea
+                      className="oa-input" rows={3}
+                      value={outcomeNotes}
+                      onChange={e => setOutcomeNotes(e.target.value)}
+                      placeholder={outcome === 'lost' ? 'Preço, prazo, concorrente, projeto cancelado…' : ''}
+                      style={{ fontFamily: 'var(--sans)', fontSize: 11.5, lineHeight: 1.5, resize: 'vertical', width: '100%' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <button
+                    className="oa-btn ghost sm"
+                    onClick={handleSaveOutcome}
+                    disabled={savingOutcome}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {savingOutcome && <Spinner size={11} />}
+                    {savingOutcome ? 'Registrando…' : 'Registrar desfecho'}
+                  </button>
+                  {proposal.outcome_at && (
+                    <span className="mono" style={{ fontSize: 10, color: 'var(--muted-2)' }}>
+                      atualizado {fmtDate(proposal.outcome_at)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Aside 3 — Timeline */}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
