@@ -62,6 +62,14 @@ Serviços após o start:
 | API Docs (Swagger) | http://localhost:8000/docs |
 | LangFuse | https://us.cloud.langfuse.com (cloud) |
 
+## Painel admin
+
+- URL: http://localhost:3000/admin/login
+- Autenticação via Supabase Auth (email/senha) — não há tela de cadastro
+- Criar o usuário admin em **Supabase Dashboard → Authentication → Users → Add user**
+
+Detalhes de cada tela do painel: [docs/reference/screens.md](docs/reference/screens.md#área-do-admin).
+
 ## Comandos
 
 | Comando | Script | Descrição |
