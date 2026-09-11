@@ -8,6 +8,7 @@
 
 # ── Skills instaladas (equivalente a node_modules dos skills) ─────────
 repo-skills/
+.agents/
 
 # ── Variáveis de ambiente na raiz ─────────────────────────────────────
 .env
